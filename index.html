@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>꼬마 대통령의 무역 교실</title>
+<title>어린이 대통령의 무역 교실</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap" rel="stylesheet">
@@ -152,8 +152,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 
 <script>
 'use strict';
+const VERSION = 'v1.1';
 /* =========================================================
-   꼬마 대통령의 무역 교실 — 6학년 사회 '세계 여러 나라와의 경제 교류'
+   어린이 대통령의 무역 교실 — 6학년 사회 '세계 여러 나라와의 경제 교류'
    만든이: 푸르이든
    ========================================================= */
 
@@ -501,7 +502,7 @@ function home(){
   <div class="card hero">
     <div class="ship">🚢</div>
     <div class="eyebrow">6학년 사회 · 세계 여러 나라와의 경제 교류</div>
-    <h1>꼬마 대통령의 무역 교실</h1>
+    <h1>어린이 대통령의 무역 교실</h1>
     <p>내가 대통령이 되어 다른 나라와 물건을 사고팔아요.<br>
     흑자와 적자를 기록하고, 이웃 나라와의 <b>관계</b>를 지키며 나라를 이끌어 보세요!</p>
     <div class="namebox">
@@ -515,7 +516,7 @@ function home(){
   <div class="card"><details><summary class="muted">기록 관리</summary>
     <div class="actions"><button class="btn small ghost" onclick="wipeName()">지금 이름의 기록 지우기</button>
     <button class="btn small ghost" onclick="wipeAll()">이 기기의 모든 기록 지우기</button></div></details></div>
-  <footer>만든이: 푸르이든 · 진행 상황은 이 기기에 저장돼요.</footer>`;
+  <footer>만든이: 푸르이든 · ${VERSION} · 진행 상황은 이 기기에 저장돼요.</footer>`;
   document.getElementById('pname').addEventListener('input',homeCheck);
   homeCheck();
 }
@@ -1142,7 +1143,7 @@ function endingScreen(){
     <div id="cardOut"></div>
   </div>
   <div class="actions"><button class="btn" onclick="pickCountry(G.name)">🌏 다른 나라로 / 다시 해 보기</button><button class="btn ghost" onclick="home()">처음 화면</button></div>
-  <footer>만든이: 푸르이든</footer>`;
+  <footer>만든이: 푸르이든 · ${VERSION}</footer>`;
 }
 
 // 결과 카드 그리기
@@ -1156,7 +1157,7 @@ async function makeCard(){
   x.fillStyle=g; x.fillRect(0,0,1000,1300);
   x.fillStyle='#fffdf8'; roundRect(x,40,40,920,1220,36); x.fill(); x.strokeStyle='#e5dccb'; x.lineWidth=3; x.stroke();
   x.textAlign='center';
-  x.fillStyle='#1f7a8c'; x.font=F(30,'j'); x.fillText('꼬마 대통령의 무역 교실',500,110);
+  x.fillStyle='#1f7a8c'; x.font=F(30,'j'); x.fillText('어린이 대통령의 무역 교실',500,110);
   x.fillStyle='#16324f'; x.font=F(44,'j'); x.fillText(`${G.name} 대통령 · ${N(G.me)}`,500,175);
   x.font=F(110,'j'); x.fillText(J.t[0],500,320);
   x.font=F(56,'j'); x.fillText(J.t[1],500,400);
@@ -1174,7 +1175,7 @@ async function makeCard(){
   // 생각
   x.textAlign='left'; x.fillStyle='#9a6c00'; x.font=F(26,'j'); x.fillText('💡 나라들이 사이좋게 무역하려면?',100,1010);
   x.fillStyle='#333'; x.font=F(26); wrap(x,(G.reflect[2]||'(생각해 보기 3번에 답을 써 보세요)').slice(0,150),100,1055,800,40,'left');
-  x.textAlign='center'; x.fillStyle='#6b7780'; x.font=F(20); x.fillText(`${new Date().toLocaleDateString('ko-KR')} · 만든이 푸르이든`,500,1225);
+  x.textAlign='center'; x.fillStyle='#6b7780'; x.font=F(20); x.fillText(`${new Date().toLocaleDateString('ko-KR')} · 만든이 푸르이든 · ${VERSION}`,500,1225);
   let url;
   try{ url=cv.toDataURL('image/png'); }catch(e){ document.getElementById('cardOut').innerHTML='<p class="muted">이 기기에서는 결과 카드 그림을 만들지 못했어요. 화면을 캡처해 주세요.</p>'; return; }
   document.getElementById('cardOut').innerHTML = `<img id="cardimg" src="${url}" alt="결과 카드"><div class="actions"><a class="btn" href="${url}" download="무역교실_${esc(G.name)}.png" style="text-decoration:none">💾 결과 카드 저장하기</a></div><p class="muted">저장이 안 되면 그림을 길게 눌러 저장해도 돼요.</p>`;
