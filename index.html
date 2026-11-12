@@ -206,6 +206,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.51', text: '의견·오류 보내기를 스프레드시트와 연결' },
   { v: '1.50', major: true, text: '수출(주황)·수입(파랑) 색을 뚜렷하게 구분, 다른 나라의 요청(불만·부탁)을 직접 해결하는 기능과 "다른 나라 물건 더 사 주기" 추가, 오른쪽 아래에 의견·오류 보내기 추가' },
   { v: '1.40', major: true, text: '나라를 13개로 늘림(일본·인도·독일·프랑스·이집트·브라질·칠레 추가), 관광·운하·소프트웨어 같은 서비스 무역 추가, 나라마다 상대국 6~7개, 대한민국을 마치면 모든 나라가 열림' },
   { v: '1.30', major: true, text: '첫 화면 배치 변경(제목 → 세계 지도·게임 방법 → 이름 입력), 꾸밈용 이모지 정리, 버전을 누르면 변경 기록 보기' },
@@ -1597,7 +1598,7 @@ function toggleVersionPanel(){ document.getElementById('fbPanel').classList.remo
 
 // ---------- 의견·오류 보내기 ----------
 // 구글 앱스 스크립트 웹 앱 주소를 넣으면 스프레드시트에 쌓여요.
-const FEEDBACK_URL = '';
+const FEEDBACK_URL = 'https://script.google.com/macros/s/AKfycbyh0WbQLKMmov8j6dqINun-aHSbF5E6-rOWH02_8qajjvCkyM_jvkkCLIKa8fHIdA7r/exec';
 let FB_KIND = '오류';
 function toggleFb(){
   const p=document.getElementById('fbPanel');
