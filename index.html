@@ -10,7 +10,7 @@
 <style>
 :root{
   --navy:#16324f; --sea:#1f7a8c; --sea2:#bfe3ea; --sand:#fbf5e9; --paper:#fffdf8;
-  --ink:#1f2a33; --muted:#6b7780; --gold:#e0a526; --up:#1e9e5a; --down:#d64545; --line:#e5dccb;
+  --ink:#1f2a33; --muted:#6b7780; --gold:#e0a526; --up:#1e9e5a; --down:#d64545; --exp:#ef6c00; --imp:#1f5fd6; --line:#e5dccb;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -87,12 +87,24 @@ textarea{min-height:80px;resize:vertical;font-size:16px}
 .notice{background:#fff7e0;border:1px solid #f1d78c;border-radius:12px;padding:10px 14px;margin:8px 0;font-size:16px}
 .notice.bad{background:#fff0f0;border-color:#f3b9b9}
 .notice.good{background:#eaf8ef;border-color:#a9dcbc}
+/* 다른 나라의 요청 */
+.reqbox{border:2px solid #f1d78c;background:#fffaf0;border-radius:16px;padding:12px 14px;margin:10px 0}
+.reqbox h3{margin:0 0 6px;font-size:20px;color:#9a6c00}
+.req{display:flex;gap:10px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:8px 0}
+.req.done{opacity:.6}
+.req .q{font-size:17px;margin:2px 0}
+.req .how{font-size:14px;color:var(--muted)}
+.req .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.req .due{font-size:13px;color:var(--down);white-space:nowrap}
 /* 결과 */
 .ptable{width:100%;border-collapse:collapse;font-size:16px}
 .ptable th,.ptable td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center}
 .ptable th{font-family:'Jua';font-weight:400;color:var(--muted)}
 .ptable td.l{text-align:left}
 .up{color:var(--up)}.down{color:var(--down)}
+.expc{color:var(--exp)} .impc{color:var(--imp)}
+.tag.exp{background:#fff0e0;color:#c25400} .tag.imp{background:#e6eefc;color:var(--imp)}
+.sect.expc,.sect.impc{color:inherit} .sect .k-exp{color:var(--exp)} .sect .k-imp{color:var(--imp)}
 .balbig{font-family:'Jua';font-size:34px;text-align:center;margin:6px 0}
 .formula{text-align:center;font-size:18px;background:#f1f8fa;border-radius:12px;padding:10px}
 .dchip{display:inline-block;border-radius:10px;padding:3px 10px;margin:3px;font-size:15px;font-family:'Jua'}
@@ -148,7 +160,16 @@ svg text{font-family:'Jua',sans-serif}
 footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 .version-badge{position:fixed;right:12px;bottom:10px;z-index:50;font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:4px 10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;user-select:none}
 .version-badge:hover{color:var(--ink)}
-.version-panel{position:fixed;right:12px;bottom:42px;z-index:51;display:none;width:min(360px,calc(100vw - 24px));max-height:60vh;overflow-y:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px rgba(22,50,79,.15);padding:14px 16px;font-size:14px}
+.fb-btn{position:fixed;right:12px;bottom:42px;z-index:50;font-size:14px;background:var(--sea);color:#fff;border:none;border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.2);cursor:pointer;font-family:'Jua',sans-serif}
+.fb-panel{position:fixed;right:12px;bottom:80px;z-index:52;display:none;width:min(360px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(22,50,79,.18);padding:14px 16px;font-size:15px}
+.fb-panel.open{display:block}
+.fb-panel h3{margin:0 0 8px;font-size:18px}
+.fb-panel .kinds{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.fb-panel .kinds button{border:2px solid var(--line);background:#fff;border-radius:10px;padding:4px 10px;font-size:14px}
+.fb-panel .kinds button.sel{border-color:var(--sea);background:#e6f6f8}
+.fb-panel textarea{min-height:90px;font-size:15px}
+.fb-panel input{font-size:15px;padding:6px 10px}
+.version-panel{position:fixed;right:12px;bottom:80px;z-index:51;display:none;width:min(360px,calc(100vw - 24px));max-height:60vh;overflow-y:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px rgba(22,50,79,.15);padding:14px 16px;font-size:14px}
 .version-panel.open{display:block}
 .version-panel h3{font-size:17px;margin:0 0 10px}
 .version-panel .vrow{display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
@@ -174,6 +195,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <div id="app"></div>
 <div class="version-panel" id="versionPanel"></div>
 <div class="version-badge" id="versionBadge" onclick="toggleVersionPanel()" title="눌러서 변경 기록 보기"></div>
+<button class="fb-btn" id="fbBtn" onclick="toggleFb()">의견·오류 보내기</button>
+<div class="fb-panel" id="fbPanel"></div>
 <div id="pop"></div>
 <div id="modal"></div>
 
@@ -183,6 +206,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.50', major: true, text: '수출(주황)·수입(파랑) 색을 뚜렷하게 구분, 다른 나라의 요청(불만·부탁)을 직접 해결하는 기능과 "다른 나라 물건 더 사 주기" 추가, 오른쪽 아래에 의견·오류 보내기 추가' },
   { v: '1.40', major: true, text: '나라를 13개로 늘림(일본·인도·독일·프랑스·이집트·브라질·칠레 추가), 관광·운하·소프트웨어 같은 서비스 무역 추가, 나라마다 상대국 6~7개, 대한민국을 마치면 모든 나라가 열림' },
   { v: '1.30', major: true, text: '첫 화면 배치 변경(제목 → 세계 지도·게임 방법 → 이름 입력), 꾸밈용 이모지 정리, 버전을 누르면 변경 기록 보기' },
   { v: '1.22', text: '참모 얼굴 그림 12개 추가' },
@@ -550,7 +574,7 @@ function newGame(name, me){
   const rel={}, cum={}, cumExp={}, tu={}, tt={}, fta={};
   partners.forEach(p=>{ rel[p]=55; cum[p]=0; cumExp[p]=0; tu[p]=0; tt[p]=0; fta[p]=false; });
   return {name, me, partners, turn:0, money:60, life:60, ind:60, rel, cum, cumExp, tu, tt, fta,
-    hist:[], log:[], crises:0, queue:[], mods:{}, promise:{}, comp:{}, step:'market', cur:null, mk:null,
+    hist:[], log:[], crises:0, requests:[], noTrade:{}, queue:[], mods:{}, promise:{}, comp:{}, step:'market', cur:null, mk:null,
     sched:['specialize','culture','disaster','fta','tariff','protect','compete','supply','quality','summit'],
     imbFired:false, notes:[], reflect:{}, finished:false};
 }
@@ -640,6 +664,7 @@ function rulesHTML(){
     <li>대통령 임기 5년을 <b>상반기·하반기</b>로 나누어 모두 <b>10번</b> 결정을 내려요.</li>
     <li><b>무역 장터</b>: 꼭 필요한 물건을 어느 나라에서 사 올지(${gl('수입')}), 우리 물건을 어느 나라에 팔지(수출) 골라요.</li>
     <li>수출한 돈 − 수입한 돈 = <b>무역수지</b>. 남으면 <b>흑자</b>, 모자라면 <b>적자</b>예요.</li>
+    <li><b>다른 나라의 요청</b>: 다른 나라가 불만이나 부탁을 말하면 장터 맨 위에 나와요. 정해진 때까지 해결하면 관계가 좋아지고, 그냥 두면 나빠져요.</li>
     <li><b>나라별 관계</b>가 좋으면 거래가 잘되고, 나쁘면 주문을 취소당하거나 물건을 팔아 주지 않아요.</li>
     <li><b>사건</b>: 참모들의 의견을 듣고 결정해요. 무엇을 얻고 잃는지는 고른 뒤에 알 수 있어요.</li>
     <li>나라 금고, 국민 생활, 산업 기술 가운데 하나라도 0이 되면 <b>위기</b>가 와요.</li>
@@ -648,6 +673,7 @@ function rulesHTML(){
 }
 
 // ---------- 세계 지도 ----------
+const EXPC='#ef6c00', IMPC='#1f5fd6';  // 수출: 주황, 수입: 파랑
 const LBL_OFF = {KR:[10,-36],CN:[-84,-10],JP:[16,4],VN:[-78,8],IN:[-74,10],SA:[0,-44],DE:[-14,-42],FR:[-70,6],EG:[-62,14],AU:[-40,22],US:[-36,-50],BR:[-40,-50],CL:[-92,-14]};
 function arcD(a,b){
   const [x1,y1]=MAP.pt[a],[x2,y2]=MAP.pt[b];
@@ -672,13 +698,13 @@ function mapSVG(o){
   const ship = (d,dur,emo)=>`<text font-size="17" text-anchor="middle" dy="6">${emo||'🚢'}<animateMotion dur="${dur}s" repeatCount="indefinite" path="${d}"/></text>`;
   if(o.routes){ parts.forEach((p,i)=>{ const d=arcD(meC,p); s+=`<path d="${d}" fill="none" stroke="#1f7a8c" stroke-width="2" class="flow" opacity=".6"/>`+ship(d,4+i*.7); }); }
   if(o.plan){
-    (o.plan.exp||[]).forEach(p=>{ const d=arcD(meC,p); s+=`<path d="${d}" fill="none" stroke="#1e9e5a" stroke-width="3" class="flow"/>`+ship(d,3.2); });
-    (o.plan.imp||[]).forEach(p=>{ const d=arcD(p,meC); s+=`<path d="${d}" fill="none" stroke="#2d6cdf" stroke-width="3" class="flow"/>`+ship(d,3.6,'📦'); });
+    (o.plan.exp||[]).forEach(p=>{ const d=arcD(meC,p); s+=`<path d="${d}" fill="none" stroke="${EXPC}" stroke-width="3" class="flow"/>`+ship(d,3.2); });
+    (o.plan.imp||[]).forEach(p=>{ const d=arcD(p,meC); s+=`<path d="${d}" fill="none" stroke="${IMPC}" stroke-width="3" class="flow"/>`+ship(d,3.6,'📦'); });
   }
   if(o.flows){
     parts.forEach(p=>{ const f=o.flows[p]; if(!f) return;
-      if(f.exp>0){ const d=arcD(meC,p); s+=`<path d="${d}" fill="none" stroke="#1e9e5a" stroke-width="${2+f.exp/6}" class="flow" opacity=".85"/>`+ship(d,3); }
-      if(f.imp>0){ const d=arcD(p,meC); s+=`<path d="${d}" fill="none" stroke="#2d6cdf" stroke-width="${2+f.imp/6}" class="flow" opacity=".8"/>`+ship(d,3.4,'📦'); }
+      if(f.exp>0){ const d=arcD(meC,p); s+=`<path d="${d}" fill="none" stroke="${EXPC}" stroke-width="${2+f.exp/6}" class="flow" opacity=".85"/>`+ship(d,3); }
+      if(f.imp>0){ const d=arcD(p,meC); s+=`<path d="${d}" fill="none" stroke="${IMPC}" stroke-width="${2+f.imp/6}" class="flow" opacity=".8"/>`+ship(d,3.4,'📦'); }
     });
   }
   // 우리나라 표시(깜빡이는 원)
@@ -702,7 +728,7 @@ function mapSVG(o){
     });
   }
   if(o.focus){ const [fx,fy]=MAP.pt[o.focus]; s+=`<text x="${fx}" y="${fy-10}" font-size="26" text-anchor="middle">❗<animate attributeName="y" values="${fy-10};${fy-18};${fy-10}" dur="1s" repeatCount="indefinite"/></text>`; }
-  if(o.flows||o.plan) s+=`<rect x="103" y="412" width="230" height="40" rx="10" fill="#fff" opacity=".85"/><text x="113" y="428" font-size="13" fill="#1e9e5a">━ 수출 (우리가 파는 것)</text><text x="113" y="445" font-size="13" fill="#2d6cdf">━ 수입 (우리가 사 오는 것)</text>`;
+  if(o.flows||o.plan) s+=`<rect x="103" y="412" width="230" height="40" rx="10" fill="#fff" opacity=".85"/><text x="113" y="428" font-size="13" fill="${EXPC}">━ 수출 (우리가 파는 것)</text><text x="113" y="445" font-size="13" fill="${IMPC}">━ 수입 (우리가 사 오는 것)</text>`;
   return s+'</svg>';
 }
 function evImg(id,sm){ return `<img class="evimg${sm?' sm':''}" src="images/ev_${id}.webp" alt="" loading="lazy" onerror="this.remove()">`; }
@@ -869,7 +895,7 @@ function marketScreen(){
     G.mk={imp:{},exp:[],notes:processQueue()};
     saveGame();
   }
-  const mk=G.mk;
+  const mk=G.mk; mk.extra=mk.extra||[]; G.requests=G.requests||[]; G.noTrade=G.noTrade||{};
   let notes = mk.notes.map(n=>`<div class="notice ${n.cls||''}">${n.t}</div>`).join('');
   // 약속 알림
   G.partners.forEach(p=>{ if(G.promise[p]===G.turn) notes+=`<div class="notice">지난번 약속: 이번에 <b>${N(p)}</b>에서 물건을 사 주기로 했어요.</div>`; });
@@ -906,21 +932,111 @@ function marketScreen(){
     <h2 style="margin:2px 0 8px">이번에는 누구와 무역할까요?</h2>
     ${mapSVG({rel:true,plan:{exp:mk.exp,imp:Object.values(mk.imp).filter(v=>ALLC.includes(v))}})}
     <div class="mapcap">고르는 대로 지도에 무역로가 그려져요.</div>
+    ${reqHTML()}
     ${notes}
-    <div class="sect">① 꼭 필요한 물건 사 오기 (${gl('수입')})</div>
+    <div class="sect">① 꼭 필요한 물건 사 오기 (<span class="k-imp">${gl('수입')}</span>)</div>
     <div class="muted">물건마다 어느 나라에서 사 올지 골라요. 관계가 좋을수록 값이 싸져요.</div>
     ${needRows}
-    <div class="sect" style="margin-top:18px">② 우리 물건 팔기 (수출) · <span style="color:var(--sea)">${mk.exp.length}/${d.slots}</span>개 나라 고르기</div>
+    <div class="sect" style="margin-top:18px">② 우리 물건 팔기 (<span class="k-exp">수출</span>) · <span style="color:var(--sea)">${mk.exp.length}/${d.slots}</span>개 나라 고르기</div>
     <div class="muted">관계가 좋고, 우리 산업 기술이 높을수록 더 많이 팔려요. 관계가 나쁘면 주문이 취소될 수 있어요.</div>
     <div class="expgrid" style="margin-top:8px">${expCards}</div>
+    <div class="sect" id="extraSect" style="margin-top:18px">③ 다른 나라 물건 더 사 주기 (<span class="k-imp">수입</span>) · 고르지 않아도 돼요</div>
+    <div class="muted">꼭 필요하지는 않지만, 상대 나라 물건을 사 주면 그 나라와 사이가 좋아지고 우리 국민도 여러 물건을 쓸 수 있어요. 대신 돈이 나가요. (2개 나라까지)</div>
+    <div class="expgrid" style="margin-top:8px">${G.partners.map(p=>{ const o=extraOffer(p); if(!o) return ''; const on=mk.extra.includes(p);
+      return `<button class="opt${on?' sel':''}" onclick="pickExtra('${p}')"><div style="display:flex;gap:8px;align-items:center">${badge(p,true)} <b>${N(p)}</b></div>
+        <div>${itemE(o.it)} ${itemName(o.it)} 사 주기 · <span class="price">🪙 ${o.price}</span></div><div>${relHTML(p)}</div></button>`; }).join('')}</div>
     <div class="actions"><button class="btn" ${ready?'':'disabled'} onclick="doMarket()">${ready?'이대로 계약하기':'모두 고르면 계약할 수 있어요'}</button></div>
   </div>`;
 }
 function pickImp(ni,p){ beep('tap'); G.mk.imp[ni]=p; saveGame(); marketScreen(); }
+function pickExtra(p){
+  beep('tap'); const e=G.mk.extra, i=e.indexOf(p);
+  if(i>=0) e.splice(i,1); else { if(e.length>=2) e.shift(); e.push(p); }
+  saveGame(); marketScreen();
+}
 function pickExp(p){
   beep('tap'); const e=G.mk.exp, i=e.indexOf(p);
   if(i>=0) e.splice(i,1); else { if(e.length>=me().slots) e.shift(); e.push(p); }
   saveGame(); marketScreen();
+}
+// ---------- 다른 나라의 요청 ----------
+// type: imbalance(우리 물건도 사 주세요) / neglect(우리를 잊었나요) / tariff(관세를 낮춰 주세요) / lowrel(대화가 필요해요) / demand(우리 물건을 팔아 주세요)
+function extraOffer(p){
+  const need = me().needs.map(n=>n.it), mw = C[G.me].wants;
+  const it = C[p].sells.find(i=>!isSvc(i) && !need.includes(i) && mw.includes(i)) || C[p].sells.find(i=>!isSvc(i) && !need.includes(i));
+  if(!it) return null;
+  const r=G.rel[p]; const f = r>=70?0.9:r>=40?1:1.15;
+  return {it, price:Math.round(9*f*(1+G.tt[p])*(G.fta[p]?0.9:1))};
+}
+function reqText(q){
+  const P=N(q.p), meS=C[G.me].s;
+  if(q.type==='imbalance') return {tag:'불만', q:`"${jo(meS,'은')} 우리에게 팔기만 하고, 우리 물건은 잘 사 주지 않네요. 우리 물건도 사 주세요."`,
+    how:`${jo(P,'과')} 무역해서 ${P} 물건을 사 오면 해결돼요. (① 꼭 필요한 물건이나 ③ 더 사 주기에서 ${P} 고르기) 지금까지 우리 흑자: 🪙${G.cum[q.p]}`};
+  if(q.type==='neglect') return {tag:'서운함', q:`"요즘 우리와는 무역을 하지 않네요. 우리를 잊은 건 아니죠?"`, how:`이번 장터에서 ${jo(P,'과')} 사고팔거나, 정상 회담을 열면 해결돼요.`};
+  if(q.type==='tariff') return {tag:'불만', q:`"우리 물건에 붙인 관세를 낮춰 주세요. 우리 공장들이 힘들어해요."`, how:`관세를 낮추면 해결돼요. 대신 그동안 지켜 주던 우리 산업은 경쟁을 더 많이 하게 돼요.`};
+  if(q.type==='lowrel') return {tag:'경고', q:`"요즘 두 나라 사이가 너무 나빠졌어요. 이대로는 무역을 계속하기 어려워요."`, how:`정상 회담을 열어 대화하면 해결돼요.`};
+  if(q.type==='demand') return {tag:'부탁', q:`"우리나라에서 ${jo(itemName(q.it),'이')} 인기가 아주 많아요! 이번에 꼭 팔아 주세요."`, how:`② 우리 물건 팔기에서 ${jo(P,'을')} 고르면 해결돼요. 해결하면 보너스 🪙6`};
+  return {tag:'',q:'',how:''};
+}
+function reqActs(q,i){
+  const b=(k,lab,cost)=>`<button class="btn small${cost?' gold':''}" ${cost&&G.money<cost?'disabled':''} onclick="reqAct(${i},'${k}')">${lab}${cost?` (🪙${cost})`:''}</button>`;
+  if(q.type==='imbalance') return b('extra',`${N(q.p)} 물건 더 사 주기`,0)+b('invest',`${N(q.p)}에 공장 지어 주기`,10);
+  if(q.type==='neglect') return b('summit','정상 회담 열기',6);
+  if(q.type==='tariff') return b('untariff','관세 낮추기',0);
+  if(q.type==='lowrel') return b('summit','정상 회담 열기',8);
+  return '';
+}
+function reqAct(i,k){
+  const q=G.requests[i]; if(!q||q.done) return;
+  const P=N(q.p); let t='';
+  if(k==='extra'){ const ex=G.mk.extra; if(!ex.includes(q.p) && extraOffer(q.p)) ex.push(q.p); saveGame(); marketScreen(); document.getElementById('extraSect')?.scrollIntoView({behavior:'smooth'}); return; }
+  if(k==='invest'){ add('m',-10); rel(q.p,12); G.cum[q.p]=Math.round(G.cum[q.p]*0.5); t=`${P}에 공장을 지어 그 나라 사람들의 일자리를 만들었어요. ${jo(P,'이')} 무척 기뻐했어요.`; }
+  if(k==='summit'){ const c=q.type==='lowrel'?8:6; add('m',-c); rel(q.p,q.type==='lowrel'?15:8); t=`${jo(P,'과')} 정상 회담을 열어 서로의 이야기를 들었어요. 두 나라 사이가 한결 가까워졌어요.`; }
+  if(k==='untariff'){ G.tt[q.p]=0; G.tu[q.p]=Math.max(0,G.tu[q.p]-0.1); rel(q.p,8); t=`${P} 물건에 붙이던 관세를 낮췄어요. ${P}도 고마워하며 우리 물건에 붙이던 관세를 조금 낮췄어요.`; }
+  q.done=true; G.mk.notes.push({cls:'good',t:'요청 해결: '+t}); beep('good'); saveGame(); marketScreen();
+}
+function reqHTML(){
+  const list=G.requests.map((q,i)=>({q,i})).filter(x=>x.q.due>=G.turn);
+  if(!list.length) return '';
+  return `<div class="reqbox"><h3>다른 나라의 요청</h3><div class="muted">이번 장터가 끝나기 전에 해결하면 관계가 좋아지고, 그냥 두면 나빠져요.</div>
+    ${list.map(({q,i})=>{ const t=reqText(q); return `<div class="req${q.done?' done':''}">${badge(q.p,true)}<div style="flex:1">
+      <div><b>${N(q.p)}</b> <span class="tag ${q.type==='demand'?'green':'red'}">${t.tag}</span> ${q.done?'<span class="tag green">해결</span>':'<span class="due">이번 장터까지</span>'}</div>
+      <div class="q">${t.q}</div><div class="how">${t.how}</div>
+      ${q.done?'':`<div class="acts">${reqActs(q,i)}</div>`}</div></div>`; }).join('')}</div>`;
+}
+// 장터가 끝난 뒤: 요청 결과 확인
+function settleRequests(flows,msgs){
+  G.requests.forEach(q=>{
+    if(q.due!==G.turn) return;
+    const P=N(q.p), f=flows[q.p]||{exp:0,imp:0};
+    if(!q.done){
+      if(q.type==='imbalance' && f.imp>0){ q.done=true; rel(q.p,6); G.cum[q.p]=Math.round(G.cum[q.p]*0.7); msgs.push({cls:'good',t:`요청 해결: ${P} 물건을 사 주었어요. ${jo(P,'이')} "이제야 서로 돕는 것 같네요" 하며 기뻐했어요.`}); }
+      else if(q.type==='neglect' && (f.imp>0||f.exp>0)){ q.done=true; rel(q.p,5); msgs.push({cls:'good',t:`요청 해결: 다시 ${jo(P,'과')} 무역을 시작했어요. ${jo(P,'이')} 반가워했어요.`}); }
+      else if(q.type==='demand' && f.exp>0){ q.done=true; rel(q.p,4); add('m',6); msgs.push({cls:'good',t:`부탁 해결: ${P}에 물건을 팔아 주었어요. 보너스 🪙6을 받았어요.`}); }
+      else if(q.type==='lowrel' && G.rel[q.p]>=40){ q.done=true; msgs.push({cls:'good',t:`${jo(P,'과')}의 사이가 조금 나아졌어요.`}); }
+    }
+    if(!q.done){
+      q.failed=true;
+      const pen={imbalance:-8,neglect:-5,tariff:-6,lowrel:-5,demand:-2}[q.type];
+      rel(q.p,pen); if(q.type==='tariff') G.tu[q.p]=Math.min(0.5,G.tu[q.p]+0.1);
+      const why={imbalance:`우리 물건은 사 주지 않는군요. 실망이에요.`,neglect:`역시 우리를 잊었군요.`,tariff:`관세를 그대로 두다니, 우리도 가만있지 않겠어요.`,lowrel:`대화조차 하지 않는군요.`,demand:`다른 나라에서 사기로 했어요.`}[q.type];
+      msgs.push({cls:'bad',t:`요청을 해결하지 못했어요. ${P}: "${why}"`});
+    }
+  });
+}
+// 장터가 끝난 뒤: 새 요청 만들기 (한 번에 2개까지)
+function makeRequests(flows){
+  if(G.turn>=TURNS-1) return [];
+  const active=()=>G.requests.filter(q=>q.due>G.turn && !q.done);
+  const busy=p=>active().some(q=>q.p===p);
+  const made=[];
+  const push=(p,type,extra)=>{ if(active().length>=2||busy(p)) return; const q={p,type,due:G.turn+1,...(extra||{})}; G.requests.push(q); made.push(q); };
+  G.partners.forEach(p=>{ if(G.tt[p]>0) push(p,'tariff'); });
+  G.partners.forEach(p=>{ if(G.rel[p]<30) push(p,'lowrel'); });
+  G.partners.slice().sort((a,b)=>G.cum[b]-G.cum[a]).forEach(p=>{ if(G.cum[p]>=35) push(p,'imbalance'); });
+  G.partners.forEach(p=>{ if((G.noTrade[p]||0)>=3) push(p,'neglect'); });
+  G.partners.forEach(p=>{ const o=exportOffer(p); if(o && G.rel[p]>=68 && Math.random()<0.3) push(p,'demand',{it:o.it}); });
+  return made;
 }
 function doMarket(){
   const d=me(), mk=G.mk, before=snap();
@@ -935,6 +1051,9 @@ function doMarket(){
     const o=importOffer(ch,n); const v=o.price;
     flows[ch].imp+=v; totalImp+=v; lines.push({it:n.it,kind:'imp',p:ch,v});
   });
+  // 더 사 주기
+  (mk.extra||[]).forEach(p=>{ const o=extraOffer(p); if(!o) return;
+    flows[p].imp+=o.price; totalImp+=o.price; lines.push({it:o.it,kind:'imp',p,v:o.price}); add('l',2); });
   // 수출
   mk.exp.forEach(p=>{
     const o=exportOffer(p);
@@ -950,6 +1069,7 @@ function doMarket(){
   G.partners.forEach(p=>{
     const traded = flows[p].exp>0 || flows[p].imp>0;
     if(traded) rel(p,2);
+    G.noTrade[p] = traded ? 0 : (G.noTrade[p]||0)+1;
     G.cum[p] += flows[p].exp - flows[p].imp;
     G.cumExp[p] += flows[p].exp;
   });
@@ -961,16 +1081,15 @@ function doMarket(){
       delete G.promise[p];
     }
   });
-  // 무역 불균형 서운함
-  G.partners.forEach(p=>{
-    if(G.cum[p]>=40){ rel(p,-3); msgs.push({cls:'bad',t:`${N(p)}: "${C[G.me].s}${jong(C[G.me].s)?'은':'는'} 우리에게 팔기만 하고 사 주지는 않네요." (지금까지 우리 흑자 ${G.cum[p]})`}); }
-  });
+  // 다른 나라의 요청: 결과 확인, 새 요청
+  settleRequests(flows,msgs);
+  const newReq = makeRequests(flows);
   if(allMet) add('l',1);
   const bal = totalExp-totalImp;
   add('m',bal);
   msgs.push(...checkCrisis().map(t=>({cls:'bad',t})));
   G.hist.push({turn:G.turn, exp:totalExp, imp:totalImp, bal});
-  G.cur = {kind:'market', lines, msgs, flows, totalExp, totalImp, bal, before};
+  G.cur = {kind:'market', lines, msgs, flows, totalExp, totalImp, bal, before, newReq};
   G.step='mresult'; G.mk=null; saveGame();
   beep(bal>=0?'coin':'bad');
   render();
@@ -978,12 +1097,12 @@ function doMarket(){
 function marketResultScreen(){
   const R=G.cur;
   const rows = G.partners.map(p=>{ const f=R.flows[p]; if(!f.exp&&!f.imp) return ''; const b=f.exp-f.imp;
-    return `<tr><td class="l">${badge(p,true)} ${N(p)}</td><td class="up">${f.exp||'-'}</td><td style="color:#2d6cdf">${f.imp||'-'}</td><td class="${b>=0?'up':'down'}">${b>=0?'+':''}${b}</td></tr>`; }).join('');
+    return `<tr><td class="l">${badge(p,true)} ${N(p)}</td><td class="expc">${f.exp||'-'}</td><td class="impc">${f.imp||'-'}</td><td class="${b>=0?'up':'down'}">${b>=0?'+':''}${b}</td></tr>`; }).join('');
   const via = R.lines.filter(l=>l.p==='via').reduce((s,l)=>s+l.v,0);
   const detail = R.lines.map(l=>{
-    if(l.kind==='exp') return `<span class="tag ${l.fail?'red':'green'}">수출 ${itemE(l.it)} ${itemName(l.it)} → ${N(l.p)} ${l.fail?'취소':'🪙'+l.v}</span>`;
+    if(l.kind==='exp') return `<span class="tag ${l.fail?'red':'exp'}">수출 ${itemE(l.it)} ${itemName(l.it)} → ${N(l.p)} ${l.fail?'취소':'🪙'+l.v}</span>`;
     if(l.p===null) return `<span class="tag red">수입 ${itemE(l.it)} ${itemName(l.it)} 안 함</span>`;
-    return `<span class="tag">수입 ${itemE(l.it)} ${itemName(l.it)} ← ${l.p==='via'?'다른 곳 거쳐':N(l.p)} 🪙${l.v}</span>`;
+    return `<span class="tag imp">수입 ${itemE(l.it)} ${itemName(l.it)} ← ${l.p==='via'?'다른 곳 거쳐':N(l.p)} 🪙${l.v}</span>`;
   }).join(' ');
   const word = R.bal>0?'흑자':R.bal<0?'적자':'0 (균형)';
   app.innerHTML = topBar()+`<div class="card">
@@ -991,13 +1110,14 @@ function marketResultScreen(){
     <h2 style="margin:2px 0">이번 무역의 성적표</h2>
     ${ringSVG(R.flows)}
     <div style="margin:8px 0">${detail}</div>
-    <table class="ptable"><tr><th class="l">나라</th><th>수출 (판 돈)</th><th>수입 (산 돈)</th><th>무역수지</th></tr>${rows}
-    ${via?`<tr><td class="l">다른 곳 거쳐</td><td>-</td><td style="color:#2d6cdf">${via}</td><td class="down">-${via}</td></tr>`:''}
-    <tr style="font-family:Jua"><td class="l">합계</td><td class="up">${R.totalExp}</td><td style="color:#2d6cdf">${R.totalImp}</td><td class="${R.bal>=0?'up':'down'}">${R.bal>=0?'+':''}${R.bal}</td></tr></table>
-    <div class="formula" style="margin-top:12px">수출 <b class="up">${R.totalExp}</b> − 수입 <b style="color:#2d6cdf">${R.totalImp}</b> = 무역수지 <b class="${R.bal>=0?'up':'down'}">${R.bal>=0?'+':''}${R.bal}</b></div>
+    <table class="ptable"><tr><th class="l">나라</th><th class="expc">수출 (판 돈)</th><th class="impc">수입 (산 돈)</th><th>무역수지</th></tr>${rows}
+    ${via?`<tr><td class="l">다른 곳 거쳐</td><td>-</td><td class="impc">${via}</td><td class="down">-${via}</td></tr>`:''}
+    <tr style="font-family:Jua"><td class="l">합계</td><td class="expc">${R.totalExp}</td><td class="impc">${R.totalImp}</td><td class="${R.bal>=0?'up':'down'}">${R.bal>=0?'+':''}${R.bal}</td></tr></table>
+    <div class="formula" style="margin-top:12px"><span class="expc">수출</span> <b class="expc">${R.totalExp}</b> − <span class="impc">수입</span> <b class="impc">${R.totalImp}</b> = 무역수지 <b class="${R.bal>=0?'up':'down'}">${R.bal>=0?'+':''}${R.bal}</b></div>
     <div class="balbig ${R.bal>=0?'up':'down'}">무역 ${gl(word)}</div>
     <div class="center muted">${R.bal>0?'판 돈이 산 돈보다 많아 나라 금고에 돈이 쌓였어요.':R.bal<0?'산 돈이 판 돈보다 많아 나라 금고의 돈이 줄었어요.':'판 돈과 산 돈이 같아요.'}</div>
     ${R.msgs.map(m=>`<div class="notice ${m.cls||''}">${m.t}</div>`).join('')}
+    ${(R.newReq||[]).length?`<div class="reqbox"><h3>새로운 요청이 왔어요</h3>${R.newReq.map(q=>{ const t=reqText(q); return `<div class="req">${badge(q.p,true)}<div><b>${N(q.p)}</b> <span class="tag ${q.type==='demand'?'green':'red'}">${t.tag}</span><div class="q">${t.q}</div><div class="how">다음 무역 장터에서 해결할 수 있어요.</div></div></div>`; }).join('')}</div>`:''}
     <div style="margin-top:10px"><b>장부 변화</b><br>${diffChips(R.before)}</div>
     <div class="actions"><button class="btn" onclick="toEvent()">이번에 일어난 사건 보기</button></div>
   </div>`;
@@ -1473,7 +1593,38 @@ function renderVersionBadge(){
   document.getElementById('versionPanel').innerHTML = '<h3>변경 기록</h3>' + VERSION_HISTORY.map(h=>
     `<div class="vrow"><div class="vnum${h.major?' major':''}">v${h.v}</div><div class="vtext">${esc(h.text)}</div></div>`).join('');
 }
-function toggleVersionPanel(){ document.getElementById('versionPanel').classList.toggle('open'); }
+function toggleVersionPanel(){ document.getElementById('fbPanel').classList.remove('open'); document.getElementById('versionPanel').classList.toggle('open'); }
+
+// ---------- 의견·오류 보내기 ----------
+// 구글 앱스 스크립트 웹 앱 주소를 넣으면 스프레드시트에 쌓여요.
+const FEEDBACK_URL = '';
+let FB_KIND = '오류';
+function toggleFb(){
+  const p=document.getElementById('fbPanel');
+  document.getElementById('versionPanel').classList.remove('open');
+  if(p.classList.contains('open')){ p.classList.remove('open'); return; }
+  const nm = (G&&G.name) || STORE.last || '';
+  p.innerHTML = `<h3>의견·오류 보내기</h3>
+    <div class="muted">게임을 하다가 이상한 점이나 느낀 점을 알려 주세요.</div>
+    <div class="kinds">${['오류','느낀 점','바라는 점'].map(k=>`<button class="${k===FB_KIND?'sel':''}" onclick="FB_KIND='${k}';this.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('sel',b===this))">${k}</button>`).join('')}</div>
+    <textarea id="fbText" maxlength="500" placeholder="예: 3번째 장터에서 버튼이 눌리지 않았어요. / 사건이 재미있었어요."></textarea>
+    <input type="text" id="fbName" maxlength="20" placeholder="이름 (쓰지 않아도 돼요)" value="${esc(nm)}" style="margin-top:6px">
+    <div class="actions" style="margin-top:8px"><button class="btn small" onclick="sendFb()">보내기</button><button class="btn small ghost" onclick="toggleFb()">닫기</button></div>
+    <div id="fbMsg" class="muted center"></div>`;
+  p.classList.add('open');
+}
+async function sendFb(){
+  const text=document.getElementById('fbText').value.trim(), msg=document.getElementById('fbMsg');
+  if(!text){ msg.textContent='내용을 써 주세요.'; return; }
+  if(!FEEDBACK_URL){ msg.textContent='아직 의견을 받는 곳이 연결되지 않았어요. 선생님께 말로 알려 주세요.'; return; }
+  const data={name:document.getElementById('fbName').value.trim(), kind:FB_KIND, text,
+    country:G?N(G.me):'', turn:G?periodLabel(Math.min(G.turn,TURNS-1)):'', step:G?G.step:'첫 화면', version:VERSION, ua:navigator.userAgent.slice(0,150)};
+  msg.textContent='보내는 중...';
+  try{
+    await fetch(FEEDBACK_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
+    msg.textContent='고마워요! 잘 보냈어요.'; document.getElementById('fbText').value='';
+  }catch(e){ msg.textContent='보내지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.'; }
+}
 document.addEventListener('click',e=>{
   const p=document.getElementById('versionPanel');
   if(!p.classList.contains('open')) return;
