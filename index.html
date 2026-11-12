@@ -156,6 +156,9 @@ svg text{font-family:'Jua',sans-serif}
 #modal{position:fixed;inset:0;background:rgba(10,25,40,.5);z-index:90;display:none;align-items:center;justify-content:center;padding:16px}
 #modal .card{max-width:640px;width:100%;max-height:88vh;overflow:auto}
 /* 결말 */
+.titleimg2{width:180px;height:180px;display:block;margin:6px auto;filter:drop-shadow(0 6px 12px rgba(22,50,79,.18))}
+.sitbox .sitimg{width:240px;max-width:38%;border-radius:12px;flex:0 0 auto;object-fit:cover;aspect-ratio:16/9}
+@media (max-width:600px){.sitbox{flex-direction:column}.sitbox .sitimg{max-width:100%;width:100%}}
 .titlebig{font-family:'Jua';font-size:38px;text-align:center;color:var(--navy);margin:4px 0}
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .stat{background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
@@ -214,6 +217,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.61', text: '이번 장터 상황 그림 11장, 결말 칭호 그림 7개, 취임식 그림 추가' },
   { v: '1.60', major: true, text: '무역 장터에 "이번 장터 상황" 추가: 경기 호황·침체, 특별 주문, 원자재값 오르내림과 사 두기, 전염병, 배 부족, 국제 행사, 새로운 시장(새 나라와 무역 시작) 등에 따라 팔 수 있는 나라 수와 값, 사야 할 물건이 달라짐' },
   { v: '1.51', text: '의견·오류 보내기를 스프레드시트와 연결' },
   { v: '1.50', major: true, text: '수출(주황)·수입(파랑) 색을 뚜렷하게 구분, 다른 나라의 요청(불만·부탁)을 직접 해결하는 기능과 "다른 나라 물건 더 사 주기" 추가, 오른쪽 아래에 의견·오류 보내기 추가' },
@@ -663,7 +667,8 @@ function makeSit(){
   return {key, ...SITS[key].make()};
 }
 function sitHTML(s){
-  return `<div class="sitbox"><div style="flex:1"><div class="lab">이번 장터 상황</div><h3>${s.title}</h3><div>${gl(s.text)}</div>
+  const img = s.key && s.key!=='first' ? `<img class="sitimg" src="images/sit_${s.key}.webp" alt="" onerror="this.remove()">` : '';
+  return `<div class="sitbox">${img}<div style="flex:1"><div class="lab">이번 장터 상황</div><h3>${s.title}</h3><div>${gl(s.text)}</div>
     ${(s.chips||[]).length?`<div class="chips">${s.chips.map(c=>`<span class="tag">${c}</span>`).join('')}</div>`:''}
     ${s.real?`<div class="real2">${s.real}</div>`:''}</div></div>`;
 }
@@ -932,6 +937,7 @@ function dreamWake(){
 function howtoScreen(){
   const d=me();
   app.innerHTML = topBar()+`<div class="card">
+    ${evImg('inauguration')}
     <div class="eyebrow">취임을 축하합니다</div>
     <h2 style="margin:4px 0">${esc(G.name)} 대통령님, ${d.n}의 무역을 부탁드려요</h2>
     <p>${d.intro}</p>
@@ -1561,13 +1567,13 @@ function judge(){
   const best = pickBy(G.partners,p=>G.rel[p]), worst = pickBy(G.partners,p=>-G.rel[p]);
   const ftas = G.partners.filter(p=>G.fta[p]);
   let t;
-  if(G.crises>=2) t=['⛈️','위기를 이겨 낸 대통령','여러 번 큰 위기가 찾아왔지만 끝까지 나라를 이끌었어요. 어떤 결정이 위기를 불렀는지 되돌아보면 다음에는 더 잘할 수 있을 거예요.'];
-  else if(avg>=65 && total>=0 && G.life>=45) t=['🏆','모두가 웃는 무역왕','우리나라도 이익을 얻고, 다른 나라와도 사이좋게 지냈어요. 서로에게 이익이 되는 무역을 해낸 최고의 대통령이에요!'];
-  else if(total>=40 && avg<50) t=['💸','흑자왕이지만 친구가 없어요','돈은 많이 벌었지만 다른 나라들과 사이가 멀어졌어요. 한쪽만 이익을 보는 무역은 오래가기 어려워요.'];
-  else if(avg>=65 && total<0) t=['🤝','마음 넓은 이웃 나라','다른 나라들과 무척 사이가 좋아요. 다만 적자가 계속되면 나라 살림이 어려워질 수 있으니 우리 이익도 함께 챙겨요.'];
-  else if(G.ind>=80) t=['🔬','기술로 앞서가는 나라','뛰어난 기술로 세계 시장에서 인정받는 나라를 만들었어요.'];
-  else if(total< -20) t=['📉','다시 일어설 무역 국가','적자가 많이 쌓였어요. 무엇을 사고팔지, 누구와 거래할지 다시 생각해 보면 분명 더 나아질 거예요.'];
-  else t=['🌱','쑥쑥 크는 무역 국가','흑자와 관계 사이에서 균형을 찾으며 차근차근 나라를 키웠어요.'];
+  if(G.crises>=2) t=[4,'위기를 이겨 낸 대통령','여러 번 큰 위기가 찾아왔지만 끝까지 나라를 이끌었어요. 어떤 결정이 위기를 불렀는지 되돌아보면 다음에는 더 잘할 수 있을 거예요.'];
+  else if(avg>=65 && total>=0 && G.life>=45) t=[0,'모두가 웃는 무역왕','우리나라도 이익을 얻고, 다른 나라와도 사이좋게 지냈어요. 서로에게 이익이 되는 무역을 해낸 최고의 대통령이에요!'];
+  else if(total>=40 && avg<50) t=[1,'흑자왕이지만 친구가 없어요','돈은 많이 벌었지만 다른 나라들과 사이가 멀어졌어요. 한쪽만 이익을 보는 무역은 오래가기 어려워요.'];
+  else if(avg>=65 && total<0) t=[2,'마음 넓은 이웃 나라','다른 나라들과 무척 사이가 좋아요. 다만 적자가 계속되면 나라 살림이 어려워질 수 있으니 우리 이익도 함께 챙겨요.'];
+  else if(G.ind>=80) t=[3,'기술로 앞서가는 나라','뛰어난 기술로 세계 시장에서 인정받는 나라를 만들었어요.'];
+  else if(total< -20) t=[5,'다시 일어설 무역 국가','적자가 많이 쌓였어요. 무엇을 사고팔지, 누구와 거래할지 다시 생각해 보면 분명 더 나아질 거예요.'];
+  else t=[6,'쑥쑥 크는 무역 국가','흑자와 관계 사이에서 균형을 찾으며 차근차근 나라를 키웠어요.'];
   return {total,avg,best,worst,ftas,t};
 }
 function finishGame(){
@@ -1592,6 +1598,7 @@ function endingScreen(){
       <text x="${37+i*52}" y="190" text-anchor="middle" font-size="11" fill="#6b7780">${i+1}</text></g>`; }).join('');
   app.innerHTML = `<div class="card center">
     <div class="eyebrow">${esc(G.name)} 대통령의 5년 임기가 끝났어요</div>
+    <img class="titleimg2" src="images/title_${J.t[0]}.webp" alt="" onerror="this.remove()">
     <div class="titlebig">${J.t[1]}</div>
     <p>${J.t[2]}</p>
     ${G.firstUnlock?'<div class="notice good">대한민국 임기를 마쳐서 <b>다른 12개 나라</b>가 모두 열렸어요. 다른 나라의 대통령이 되어 보면, 그 나라의 처지에서 무역을 생각해 볼 수 있어요.</div>':''}
@@ -1638,9 +1645,11 @@ async function makeCard(){
   x.textAlign='center';
   x.fillStyle='#1f7a8c'; x.font=F(30,'j'); x.fillText('어린이 대통령의 무역 교실',500,110);
   x.fillStyle='#16324f'; x.font=F(44,'j'); x.fillText(`${G.name} 대통령 · ${N(G.me)}`,500,175);
-  x.strokeStyle='#e0a526'; x.lineWidth=4; roundRect(x,140,250,720,120,60); x.stroke();
-  x.fillStyle='#9a6c00'; x.font=F(24); x.fillText('나의 칭호',500,290);
-  x.fillStyle='#16324f'; x.font=F(52,'j'); x.fillText(J.t[1],500,350);
+  const timg = await new Promise(res=>{ const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=`images/title_${J.t[0]}.webp`; });
+  if(timg){ x.drawImage(timg,130,215,170,170); }
+  x.strokeStyle='#e0a526'; x.lineWidth=4; roundRect(x,timg?320:140,250,timg?560:720,120,60); x.stroke();
+  x.fillStyle='#9a6c00'; x.font=F(24); x.fillText('나의 칭호',timg?600:500,290);
+  x.fillStyle='#16324f'; x.font=F(timg&&J.t[1].length>10?40:50,'j'); x.fillText(J.t[1],timg?600:500,350);
   x.font=F(26); x.fillStyle='#444'; wrap(x,J.t[2],500,430,800,38);
   // 숫자
   const st=[['무역수지',`${J.total>=0?'+':''}${J.total}`],['평균 관계',`${J.avg}`],['가장 친한 나라',N(J.best)],['FTA',J.ftas.length?J.ftas.map(p=>C[p].s).join('·'):'없음']];
