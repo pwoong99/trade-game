@@ -58,7 +58,7 @@ textarea{min-height:80px;resize:vertical;font-size:16px}
 .namebox{max-width:360px;margin:14px auto 0}
 .rules li{margin:6px 0}
 /* 나라 고르기 */
-.cgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
 .ccard{border:2px solid var(--line);border-radius:16px;padding:16px;background:#fff;text-align:left}
 .ccard.lock{opacity:.55;background:#f4f4f4}
 .ccard h3{margin:8px 0 4px;font-size:22px}
@@ -183,6 +183,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.40', major: true, text: '나라를 13개로 늘림(일본·인도·독일·프랑스·이집트·브라질·칠레 추가), 관광·운하·소프트웨어 같은 서비스 무역 추가, 나라마다 상대국 6~7개, 대한민국을 마치면 모든 나라가 열림' },
   { v: '1.30', major: true, text: '첫 화면 배치 변경(제목 → 세계 지도·게임 방법 → 이름 입력), 꾸밈용 이모지 정리, 버전을 누르면 변경 기록 보기' },
   { v: '1.22', text: '참모 얼굴 그림 12개 추가' },
   { v: '1.21', text: '사건 장면 그림 11장과 꿈 장면 그림 추가' },
@@ -203,9 +204,12 @@ const IT = {
   chip:{n:'반도체',e:'💾'}, car:{n:'자동차',e:'🚗'}, phone:{n:'휴대 전화',e:'📱'}, machine:{n:'기계',e:'⚙️'},
   ship:{n:'배',e:'🚢'}, oil:{n:'원유',e:'🛢️'}, gas:{n:'천연가스',e:'🔥'}, iron:{n:'철광석',e:'⛏️'},
   coal:{n:'석탄',e:'⚫'}, beef:{n:'소고기',e:'🥩'}, grain:{n:'밀·옥수수',e:'🌾'}, rice:{n:'쌀',e:'🍚'},
-  clothes:{n:'옷',e:'👕'}, coffee:{n:'커피',e:'☕'}, copper:{n:'구리',e:'🔶'}, fruit:{n:'포도·과일',e:'🍇'},
-  plane:{n:'비행기',e:'✈️'}, electronics:{n:'생활 가전',e:'🔌'}, chicken:{n:'닭고기',e:'🍗'}
+  clothes:{n:'옷',e:'👕'}, coffee:{n:'커피',e:'☕'}, copper:{n:'구리',e:'🔶'}, fruit:{n:'과일',e:'🍇'},
+  plane:{n:'비행기',e:'✈️'}, electronics:{n:'생활 가전',e:'🔌'}, chicken:{n:'닭고기',e:'🍗'},
+  soy:{n:'콩',e:'🌱'}, medicine:{n:'약',e:'💊'}, cosmetics:{n:'화장품',e:'💄'}, fertilizer:{n:'비료',e:'🧪'},
+  software:{n:'소프트웨어',e:'💻',svc:true}, tour:{n:'관광',e:'🧳',svc:true}, canal:{n:'운하 통행료',e:'⚓',svc:true}
 };
+const isSvc = id => !!(IT[id] && IT[id].svc);
 // 꿈 속에서 이 물건이 없으면?
 const MISS_TXT = {
   oil:'주유소가 텅 비고, 공장 기계가 멈췄어요.',
@@ -214,22 +218,27 @@ const MISS_TXT = {
   car:'자동차를 사려면 몇 년을 기다려야 해요.',
   machine:'공장을 돌릴 기계가 없어 일을 할 수 없어요.',
   phone:'휴대 전화가 귀해져 연락하기가 어려워졌어요.',
-  chip:'부품이 없어 스마트폰 공장이 멈췄어요.',
-  clothes:'옷이 모자라 옷값이 크게 올랐어요.'
+  chip:'부품이 없어 전자 제품 공장이 멈췄어요.',
+  clothes:'옷이 모자라 옷값이 크게 올랐어요.',
+  gas:'가스가 모자라 전기를 만들기 어렵고 집이 추워졌어요.',
+  electronics:'냉장고, 세탁기 같은 생활 가전을 구하기 어려워졌어요.',
+  fertilizer:'비료가 없어 농작물이 잘 자라지 않아요.'
 };
+const FTA_GENERIC = '세계 여러 나라는 FTA를 맺어 서로 관세를 낮추고 무역을 늘리고 있어요.';
+const CULTURE_GENERIC = '여러 나라는 박람회와 문화 행사를 열어 서로를 알리고, 무역을 함께할 친구 나라를 만들어요.';
+const PROTECT_GENERIC = '많은 나라가 자기 나라 농민과 공장을 지키려고 수입품에 관세를 매기거나 들여오는 양을 정해 두어요.';
+const EU_FTA = '유럽 연합(EU)과 우리나라는 2011년에 FTA를 맺었어요. 독일과 프랑스도 유럽 연합에 속해 있어서 이 약속을 함께 지켜요.';
 
 // ---------- 나라 ----------
-// sells: 이 나라가 다른 나라에 팔 수 있는 물건 / wants: 이 나라가 사고 싶어 하는 물건
+// exports: 잘 만들어 파는 것(값) / needs: 꼭 사 와야 하는 것 / sells: 상대국일 때 팔 수 있는 것 / wants: 상대국일 때 사고 싶어 하는 것
+// partners: 이 나라로 할 때 함께 무역하는 나라
 const C = {
-  KR:{n:'대한민국',s:'한국',color:'#2d6cdf',playable:true,
+  KR:{n:'대한민국',s:'한국',cont:'아시아',color:'#2d6cdf',
     exports:{chip:20,car:18,phone:16,machine:14}, slots:2,
-    needs:[
-      {it:'oil',p:14,miss:{i:-8,l:-5}},
-      {it:'iron',p:10,miss:{i:-8}},
-      {it:'grain',p:9,miss:{l:-8}}
-    ],
-    sells:['chip','car','phone','machine','ship'],
-    wants:['oil','iron','grain','gas','coal','beef','copper','fruit','clothes','coffee','plane'],
+    needs:[{it:'oil',p:14,miss:{i:-8,l:-5}},{it:'iron',p:10,miss:{i:-8}},{it:'grain',p:9,miss:{l:-8}}],
+    partners:['CN','US','JP','VN','SA','AU','CL'],
+    sells:['chip','car','phone','machine','ship','cosmetics','electronics'],
+    wants:['oil','iron','grain','gas','coal','beef','copper','fruit','clothes','coffee','plane','tour','canal','software','soy','car','machine','medicine'],
     intro:'산이 많고 자원이 적지만, 사람들의 기술이 뛰어난 나라예요.',
     realSpec:'우리나라는 원유가 거의 나지 않아 쓰는 원유를 거의 모두 수입해요. 대신 반도체, 자동차, 배 같은 물건을 만들어 세계 여러 나라에 많이 수출해요.',
     realCulture:'한국 드라마와 노래(한류)가 세계에서 인기를 끌면서 한국의 화장품, 라면 같은 식품의 수출도 함께 늘었어요.',
@@ -241,112 +250,207 @@ const C = {
       real:'2021년 가을, 중국이 요소 수출을 막자 우리나라는 요소수가 모자라 큰 어려움을 겪었어요. 그 뒤 우리나라는 요소를 사 오는 나라를 늘리려고 노력하고 있어요.'},
     fta:'CL', ftaReal:'우리나라는 2004년 칠레와 처음으로 FTA를 맺었어요. 그 뒤 칠레산 포도 같은 과일을 더 싸게 살 수 있게 되었고, 우리 자동차와 휴대 전화는 칠레에 더 많이 팔리게 되었어요.'
   },
-  SA:{n:'사우디아라비아',s:'사우디',color:'#1b8a4b',playable:true,
-    exports:{oil:24,gas:14}, slots:2,
-    needs:[
-      {it:'grain',p:12,miss:{l:-9}},
-      {it:'car',p:14,miss:{l:-5,i:-3}},
-      {it:'machine',p:10,miss:{i:-8}}
-    ],
-    sells:['oil','gas'],
-    wants:['car','machine','grain','clothes','phone','rice'],
-    intro:'땅속에 원유가 아주 많지만, 사막이 넓어 농사짓기 어려운 나라예요.',
-    realSpec:'사우디아라비아는 세계에서 원유를 가장 많이 수출하는 나라 가운데 하나예요. 사막이 넓어 먹을거리는 많이 수입해요.',
-    realCulture:'여러 나라는 박람회와 문화 행사를 열어 서로를 알리고, 무역을 함께할 친구 나라를 만들어요.',
-    protect:{item:'우유와 유제품',who:'목장 농부',sellers:['AU','US'],
-      real:'많은 나라가 자기 나라 농부와 목장을 지키려고 수입 농산물에 관세를 매기거나 들여오는 양을 정해 두어요.'},
-    rival:'US', realCompete:'원유를 파는 나라들도 서로 경쟁해요. 미국은 최근 원유와 천연가스를 많이 수출하는 나라가 되었어요.',
-    supply:{item:'쌀',from:'VN',why:'자기 나라 사람들이 먹을 쌀이 모자랄까 봐 쌀 수출을 줄이겠다고 했어요',
-      use:'쌀은 우리 국민이 매일 먹는 중요한 먹을거리예요',
-      real:'2020년 코로나19가 퍼졌을 때 베트남이 잠시 쌀 수출을 줄이자, 쌀을 수입하는 나라들이 크게 걱정했어요.'},
-    fta:null, ftaReal:'세계 여러 나라는 FTA를 맺어 서로 관세를 낮추고 무역을 늘리고 있어요.'
-  },
-  AU:{n:'오스트레일리아',s:'호주',color:'#c4572c',playable:true,
-    exports:{iron:16,coal:11,beef:12,grain:10,gas:13}, slots:3,
-    needs:[
-      {it:'car',p:14,miss:{l:-6}},
-      {it:'phone',p:12,miss:{l:-6}},
-      {it:'oil',p:12,miss:{i:-8,l:-4}}
-    ],
-    sells:['iron','coal','beef','grain','gas'],
-    wants:['car','phone','machine','oil','clothes'],
-    intro:'땅이 아주 넓고 철광석·석탄 같은 자원과 소·밀이 풍부한 나라예요.',
-    realSpec:'오스트레일리아는 철광석을 세계에서 가장 많이 수출하는 나라예요. 자동차는 2017년부터 직접 만들지 않고 모두 수입해요.',
-    realCulture:'여러 나라는 박람회와 문화 행사를 열어 서로를 알리고, 무역을 함께할 친구 나라를 만들어요.',
-    protect:{item:'자동차',who:'자동차 공장 노동자',sellers:['KR','CN'],
-      real:'오스트레일리아는 값싼 수입 자동차와의 경쟁, 높은 생산비 같은 여러 까닭으로 2017년에 마지막 자동차 공장이 문을 닫았어요.'},
-    rival:'US', realCompete:'소고기와 밀을 파는 나라들은 서로 경쟁해요. 미국도 소고기와 곡물을 많이 수출하는 나라예요.',
-    supply:{item:'반도체',from:'KR',why:'전 세계에 반도체가 모자라 우리에게 보낼 양을 줄이겠다고 했어요',
-      use:'반도체는 자동차와 휴대 전화에 꼭 들어가는 부품이에요',
-      real:'2021년 전 세계에 반도체가 모자라 여러 나라의 자동차 회사들이 차를 제때 만들지 못했어요.'},
-    fta:null, ftaReal:'세계 여러 나라는 FTA를 맺어 서로 관세를 낮추고 무역을 늘리고 있어요.'
-  },
-  VN:{n:'베트남',s:'베트남',color:'#d23b3b',playable:true,
-    exports:{clothes:13,coffee:10,rice:10,phone:16}, slots:3,
-    needs:[
-      {it:'chip',p:14,miss:{i:-10}},
-      {it:'machine',p:12,miss:{i:-8}},
-      {it:'oil',p:12,miss:{i:-6,l:-4}}
-    ],
-    sells:['clothes','coffee','rice','phone'],
-    wants:['chip','machine','oil','beef','grain'],
-    intro:'일할 사람이 많고 쌀농사가 잘되는 나라예요. 요즘은 공장도 많이 생겼어요.',
-    realSpec:'베트남은 옷, 커피, 쌀을 많이 수출하고, 요즘은 스마트폰도 많이 만들어 수출해요. 이를 위해 반도체 같은 부품과 기계를 수입해요.',
-    realCulture:'여러 나라는 박람회와 문화 행사를 열어 서로를 알리고, 무역을 함께할 친구 나라를 만들어요.',
-    protect:{item:'닭고기',who:'양계 농민',sellers:['US'],
-      real:'많은 나라가 자기 나라 농민을 지키려고 수입 농산물에 관세를 매기거나 들여오는 양을 정해 두어요.'},
-    rival:'CN', realCompete:'옷과 휴대 전화를 만드는 나라들은 서로 경쟁해요. 그래서 더 좋은 품질과 기술을 갖추려고 노력해요.',
-    supply:{item:'부품',from:'CN',why:'공장들이 갑자기 멈추면서 부품을 보내 줄 수 없게 되었어요',
-      use:'부품이 없으면 우리 휴대 전화 공장도 물건을 만들 수 없어요',
-      real:'2020년 코로나19로 중국 공장들이 멈추자, 부품을 받지 못한 여러 나라의 공장도 함께 멈췄어요.'},
-    fta:null, ftaReal:'세계 여러 나라는 FTA를 맺어 서로 관세를 낮추고 무역을 늘리고 있어요.'
-  },
-  CN:{n:'중국',s:'중국',color:'#c8102e',playable:true,
+  CN:{n:'중국',s:'중국',cont:'아시아',color:'#c8102e',
     exports:{phone:14,car:14,machine:13,clothes:10}, slots:3,
-    needs:[
-      {it:'chip',p:14,miss:{i:-10}},
-      {it:'iron',p:10,miss:{i:-8}},
-      {it:'oil',p:13,miss:{i:-6,l:-4}}
-    ],
-    sells:['electronics','clothes','machine','chip','phone','car'],
-    wants:['chip','iron','oil','copper','coal','beef','machine','plane','grain','gas'],
+    needs:[{it:'chip',p:14,miss:{i:-10}},{it:'iron',p:10,miss:{i:-8}},{it:'oil',p:13,miss:{i:-6,l:-4}}],
+    partners:['KR','US','JP','VN','AU','BR','SA'],
+    sells:['electronics','clothes','machine','chip','phone','car','fertilizer'],
+    wants:['chip','iron','oil','copper','coal','beef','machine','plane','grain','gas','rice','soy','tour','canal','fruit','cosmetics'],
     intro:'사람이 아주 많고 공장이 많아 여러 가지 물건을 대량으로 만드는 나라예요.',
     realSpec:'중국은 세계에서 물건을 가장 많이 수출하는 나라예요. 공장에서 물건을 만드는 데 필요한 철광석, 원유, 반도체는 많이 수입해요.',
-    realCulture:'여러 나라는 박람회와 문화 행사를 열어 서로를 알리고, 무역을 함께할 친구 나라를 만들어요.',
-    protect:{item:'소고기',who:'목축 농민',sellers:['AU','US'],
-      real:'많은 나라가 자기 나라 농민을 지키려고 수입 농산물에 관세를 매기거나 들여오는 양을 정해 두어요.'},
+    realCulture:CULTURE_GENERIC,
+    protect:{item:'소고기',who:'목축 농민',sellers:['AU','US','BR'],real:PROTECT_GENERIC},
     rival:'VN', realCompete:'옷과 휴대 전화를 만드는 공장들이 베트남 같은 나라로 옮겨 가면서, 중국과 베트남은 서로 경쟁하는 사이가 되기도 했어요.',
     supply:{item:'철광석',from:'AU',why:'큰 광산에 사고가 나서 철광석을 제때 보내기 어렵다고 했어요',
       use:'철광석은 철을 만들어 건물, 자동차, 배를 짓는 데 꼭 필요해요',
       real:'중국은 철광석의 많은 양을 오스트레일리아에서 사 와요. 그래서 다른 나라에서도 철광석을 사 오려고 먼 나라의 광산에 투자하기도 해요.'},
     fta:'KR', ftaReal:'중국과 우리나라는 2015년에 FTA를 맺었어요. 두 나라는 서로에게 아주 큰 무역 상대예요.'
   },
-  US:{n:'미국',s:'미국',color:'#3c3b6e',playable:true,
-    exports:{plane:22,machine:15,gas:13,beef:12,grain:11}, slots:2,
-    needs:[
-      {it:'car',p:14,miss:{l:-5,i:-3}},
-      {it:'phone',p:12,miss:{l:-6}},
-      {it:'clothes',p:10,miss:{l:-6}}
-    ],
-    sells:['grain','oil','gas','plane','machine','beef','chicken','chip'],
-    wants:['car','chip','phone','clothes','coffee','machine','oil'],
+  JP:{n:'일본',s:'일본',cont:'아시아',color:'#e0607e',
+    exports:{car:20,machine:16,chip:15,electronics:12}, slots:2,
+    needs:[{it:'oil',p:13,miss:{i:-8,l:-4}},{it:'gas',p:11,miss:{l:-8}},{it:'grain',p:9,miss:{l:-7}}],
+    partners:['US','CN','KR','AU','SA','VN'],
+    sells:['car','machine','chip','electronics'],
+    wants:['oil','gas','grain','beef','iron','coal','copper','clothes','coffee','fruit','soy','tour','canal','software','car','medicine','machine'],
+    intro:'섬나라로 자원은 적지만, 자동차와 기계, 정밀한 부품을 잘 만드는 나라예요.',
+    realSpec:'일본은 자동차와 기계, 반도체를 만드는 데 쓰는 소재와 부품을 많이 수출해요. 원유, 천연가스, 식량은 많이 수입해요.',
+    realCulture:'일본의 만화와 애니메이션은 세계 여러 나라에서 인기가 많아요. 문화가 알려지면 그 나라 물건과 관광에 대한 관심도 커져요.',
+    protect:{item:'쌀',who:'농민',sellers:['US','VN'],real:'일본도 우리나라처럼 외국 쌀에 높은 관세를 매겨 자기 나라 농민을 보호해요.'},
+    rival:'KR', realCompete:'일본과 우리나라는 자동차, 전자 제품, 배 등에서 서로 경쟁하면서도 부품과 소재를 주고받는 사이예요.',
+    supply:{item:'천연가스',from:'AU',why:'큰 가스 공장에 파업이 일어나 천연가스를 제때 보내기 어렵다고 했어요',
+      use:'천연가스는 전기를 만들고 집을 따뜻하게 하는 데 꼭 필요해요',
+      real:'일본은 쓰는 에너지의 대부분을 수입해요. 2011년 큰 지진으로 원자력 발전소가 멈춘 뒤에는 천연가스 수입이 크게 늘었어요.'},
+    fta:'AU', ftaReal:'일본은 2015년 오스트레일리아와 경제 동반자 협정(FTA와 비슷한 약속)을 맺었어요.'
+  },
+  VN:{n:'베트남',s:'베트남',cont:'아시아',color:'#d23b3b',
+    exports:{clothes:13,coffee:10,rice:10,phone:14}, slots:3,
+    needs:[{it:'chip',p:14,miss:{i:-10}},{it:'machine',p:12,miss:{i:-8}},{it:'oil',p:12,miss:{i:-6,l:-4}}],
+    partners:['CN','US','KR','JP','SA','AU'],
+    sells:['clothes','coffee','rice','phone'],
+    wants:['chip','machine','oil','beef','grain','car','cosmetics'],
+    intro:'일할 사람이 많고 쌀농사가 잘되는 나라예요. 요즘은 공장도 많이 생겼어요.',
+    realSpec:'베트남은 옷, 커피, 쌀을 많이 수출하고, 요즘은 스마트폰도 많이 만들어 수출해요. 이를 위해 반도체 같은 부품과 기계를 수입해요.',
+    realCulture:CULTURE_GENERIC,
+    protect:{item:'닭고기',who:'양계 농민',sellers:['US'],real:PROTECT_GENERIC},
+    rival:'CN', realCompete:'옷과 휴대 전화를 만드는 나라들은 서로 경쟁해요. 그래서 더 좋은 품질과 기술을 갖추려고 노력해요.',
+    supply:{item:'부품',from:'CN',why:'공장들이 갑자기 멈추면서 부품을 보내 줄 수 없게 되었어요',
+      use:'부품이 없으면 우리 휴대 전화 공장도 물건을 만들 수 없어요',
+      real:'2020년 코로나19로 중국 공장들이 멈추자, 부품을 받지 못한 여러 나라의 공장도 함께 멈췄어요.'},
+    fta:null, ftaReal:'베트남과 우리나라는 2015년에 FTA를 맺었어요. 그 뒤 우리 기업들이 베트남에 공장을 많이 지었어요.'
+  },
+  IN:{n:'인도',s:'인도',cont:'아시아',color:'#e8892b',
+    exports:{software:20,medicine:14,clothes:11,rice:10}, slots:2,
+    needs:[{it:'oil',p:13,miss:{i:-8,l:-5}},{it:'machine',p:11,miss:{i:-8}},{it:'electronics',p:10,miss:{l:-6}}],
+    partners:['US','CN','SA','DE','JP','KR'],
+    sells:['software','medicine','rice','clothes'],
+    wants:['oil','machine','electronics','phone','chip','gas','plane','coal','canal','tour'],
+    intro:'사람이 아주 많고, 컴퓨터 프로그램을 만드는 일과 약을 만드는 일을 잘하는 나라예요.',
+    realSpec:'인도는 소프트웨어 같은 서비스를 많이 수출하고, 값싼 약을 세계 여러 나라에 팔아 "세계의 약국"이라고도 불려요. 원유는 많이 수입해요.',
+    realCulture:'인도 영화와 요가는 세계에서 인기가 많아요. 문화가 알려지면 그 나라 물건과 관광에 대한 관심도 커져요.',
+    protect:{item:'우유와 유제품',who:'낙농 농민',sellers:['US'],real:'인도는 수많은 작은 낙농 농가를 지키려고 외국 유제품 수입을 엄격하게 막고 있어요.'},
+    rival:'CN', realCompete:'인도와 중국은 옷, 약, 전자 제품 등을 두고 세계 시장에서 경쟁해요.',
+    supply:{item:'약 원료',from:'CN',why:'공장들이 갑자기 멈추면서 약을 만드는 원료를 보내기 어렵게 되었어요',
+      use:'약 원료가 없으면 우리 제약 공장이 약을 만들 수 없어요',
+      real:'인도는 약을 만드는 원료의 많은 양을 중국에서 사 와요. 2020년 코로나19 때 원료 공급이 흔들리자 인도는 원료를 직접 만들려고 노력하기 시작했어요.'},
+    fta:'KR', ftaReal:'인도와 우리나라는 2010년에 포괄적 경제 동반자 협정(CEPA, FTA와 비슷한 약속)을 맺었어요.'
+  },
+  SA:{n:'사우디아라비아',s:'사우디',cont:'아시아',color:'#1b8a4b',
+    exports:{oil:22,gas:14}, slots:2,
+    needs:[{it:'grain',p:12,miss:{l:-9}},{it:'car',p:14,miss:{l:-5,i:-3}},{it:'machine',p:10,miss:{i:-8}}],
+    partners:['CN','JP','KR','IN','US','BR'],
+    sells:['oil','gas','fertilizer'],
+    wants:['car','machine','grain','clothes','phone','rice','chicken','plane','electronics','beef','soy','tour'],
+    intro:'땅속에 원유가 아주 많지만, 사막이 넓어 농사짓기 어려운 나라예요.',
+    realSpec:'사우디아라비아는 세계에서 원유를 가장 많이 수출하는 나라 가운데 하나예요. 사막이 넓어 먹을거리는 많이 수입해요.',
+    realCulture:CULTURE_GENERIC,
+    protect:{item:'닭고기',who:'양계 농민',sellers:['BR','US'],real:PROTECT_GENERIC},
+    rival:'US', realCompete:'원유를 파는 나라들도 서로 경쟁해요. 미국은 최근 원유와 천연가스를 많이 수출하는 나라가 되었어요.',
+    supply:{item:'쌀',from:'IN',why:'자기 나라 쌀값이 오르자 쌀 수출을 막겠다고 했어요',
+      use:'쌀은 우리 국민이 매일 먹는 중요한 먹을거리예요',
+      real:'2023년 인도가 자기 나라 쌀값을 지키려고 일부 쌀 수출을 막자, 쌀을 수입하는 나라들이 크게 걱정했어요.'},
+    fta:null, ftaReal:FTA_GENERIC
+  },
+  DE:{n:'독일',s:'독일',cont:'유럽',color:'#5b6b7a',
+    exports:{car:19,machine:17,medicine:14}, slots:2,
+    needs:[{it:'gas',p:12,miss:{l:-8,i:-3}},{it:'chip',p:11,miss:{i:-9}},{it:'electronics',p:9,miss:{l:-6}}],
+    partners:['US','CN','FR','JP','KR','IN'],
+    sells:['car','machine','medicine'],
+    wants:['gas','chip','electronics','clothes','phone','software','copper','canal','tour','soy','coffee'],
+    intro:'유럽 한가운데 있는 나라로, 자동차와 기계를 만드는 기술이 아주 뛰어나요.',
+    realSpec:'독일은 자동차, 기계, 약을 많이 수출하는 유럽에서 가장 큰 무역 나라예요. 2022년 전쟁으로 러시아에서 오던 천연가스가 끊기자 여러 나라에서 가스를 사 오려고 큰 노력을 했어요.',
+    realCulture:CULTURE_GENERIC,
+    protect:{item:'전기 자동차',who:'자동차 공장 노동자',sellers:['CN'],
+      real:'2024년 유럽 연합(EU)은 값싼 중국산 전기 자동차에 관세를 더 매기기로 했어요. 자기 나라 자동차 공장을 지키려는 것이었지만, 독일에서는 중국과의 무역이 나빠질까 봐 반대하는 목소리도 컸어요.'},
+    rival:'JP', realCompete:'독일, 일본, 우리나라는 자동차와 기계를 두고 세계 시장에서 경쟁해요.',
+    supply:{item:'천연가스',from:null,fromName:'러시아',head:'전쟁 때문에 러시아에서 오던 천연가스가 끊기게 되었어요',
+      use:'천연가스는 공장을 돌리고 집을 따뜻하게 하는 데 꼭 필요해요',
+      real:'2022년 전쟁으로 러시아에서 오던 천연가스가 끊기자, 독일은 다른 여러 나라에서 가스를 사 오려고 큰 노력을 했어요.'},
+    fta:'KR', ftaReal:EU_FTA
+  },
+  FR:{n:'프랑스',s:'프랑스',cont:'유럽',color:'#6a5acd',
+    exports:{plane:20,tour:16,cosmetics:13,grain:10}, slots:2,
+    needs:[{it:'oil',p:13,miss:{i:-6,l:-5}},{it:'electronics',p:11,miss:{l:-6}},{it:'clothes',p:10,miss:{l:-6}}],
+    partners:['DE','US','CN','JP','SA','KR'],
+    sells:['plane','tour','cosmetics','grain'],
+    wants:['oil','electronics','clothes','phone','software','canal','tour','gas','soy','car','machine','medicine','fruit'],
+    intro:'아름다운 관광지가 많아 세계에서 관광객이 가장 많이 찾아오는 나라예요. 비행기와 화장품도 잘 만들어요.',
+    realSpec:'프랑스는 세계에서 관광객이 가장 많이 찾는 나라예요. 외국 관광객이 와서 쓰는 돈은 물건을 판 것처럼 나라에 돈을 벌어다 줘요. 이것도 무역의 한 종류(서비스 무역)예요.',
+    realCulture:'프랑스는 음식, 패션, 미술 같은 문화가 널리 알려져 있어 관광객이 많이 찾아와요.',
+    protect:{item:'소고기',who:'목축 농민',sellers:['US'],
+      real:'프랑스 농민들은 다른 대륙의 값싼 소고기가 들어오게 하는 무역 협정에 반대하며 시위를 벌이기도 했어요.'},
+    rival:'US', realCompete:'프랑스 등 유럽 나라들이 함께 만드는 에어버스 비행기와 미국의 보잉 비행기는 세계 시장에서 치열하게 경쟁해요.',
+    supply:{item:'원유',from:'SA',why:'원유 생산을 줄이기로 했어요',
+      use:'원유는 자동차와 비행기를 움직이는 연료를 만드는 데 꼭 필요해요',
+      real:'원유를 수출하는 나라들이 생산량을 줄이면 세계 원윳값이 오르고, 원유를 수입하는 나라들은 물가가 올라 어려움을 겪어요.'},
+    fta:'KR', ftaReal:EU_FTA
+  },
+  EG:{n:'이집트',s:'이집트',cont:'아프리카',color:'#c9a227',
+    exports:{gas:14,tour:16,canal:18,fruit:9}, slots:2,
+    needs:[{it:'grain',p:12,miss:{l:-10}},{it:'machine',p:11,miss:{i:-8}},{it:'oil',p:10,miss:{i:-5,l:-4}}],
+    partners:['CN','US','SA','DE','FR','IN'],
+    sells:['gas','tour','canal','fruit'],
+    wants:['grain','machine','oil','car','electronics','phone','clothes'],
+    intro:'피라미드 같은 유적이 많아 관광객이 많이 찾고, 큰 배들이 지나가는 수에즈 운하가 있는 나라예요. 공장 기술은 아직 부족해요.',
+    realSpec:'이집트는 관광과 수에즈 운하를 지나가는 배들이 내는 통행료로 많은 돈을 벌어요. 밀은 세계에서 손꼽히게 많이 수입하는 나라예요.',
+    realCulture:'이집트는 피라미드 같은 오래된 문화유산을 세계에 알려 관광객을 많이 불러 모아요.',
+    protect:{item:'옷',who:'옷 공장 노동자',sellers:['CN','IN'],real:PROTECT_GENERIC},
+    rival:'FR', tourRival:true, realCompete:'관광객을 끌어모으려는 나라들도 서로 경쟁해요. 그래서 관광지를 깨끗하게 가꾸고, 안전하고 친절한 서비스를 갖추려고 노력해요.',
+    supply:{item:'밀',from:null,fromName:'우크라이나와 러시아',head:'우크라이나와 러시아 사이에 전쟁이 일어나 밀이 잘 들어오지 않게 되었어요',
+      use:'밀은 우리 국민이 매일 먹는 빵을 만드는 데 꼭 필요해요',
+      real:'2022년 전쟁으로 우크라이나와 러시아에서 오던 밀이 줄자, 밀을 많이 수입하던 이집트는 빵값이 오를까 크게 걱정하며 다른 나라에서 밀을 사 오려고 노력했어요.'},
+    fta:null, ftaReal:FTA_GENERIC
+  },
+  US:{n:'미국',s:'미국',cont:'아메리카',color:'#3c3b6e',
+    exports:{plane:20,machine:15,gas:13,beef:12,grain:11}, slots:2,
+    needs:[{it:'car',p:14,miss:{l:-5,i:-3}},{it:'phone',p:12,miss:{l:-6}},{it:'clothes',p:10,miss:{l:-6}}],
+    partners:['CN','JP','KR','DE','VN','BR'],
+    sells:['grain','oil','gas','plane','machine','beef','chicken','chip','software','medicine'],
+    wants:['car','chip','phone','clothes','coffee','machine','oil','medicine','software','tour','cosmetics','electronics','fruit','copper'],
     intro:'땅이 넓어 곡물을 많이 기르고, 비행기와 첨단 기계를 잘 만드는 큰 나라예요.',
     realSpec:'미국은 세계에서 무역을 가장 많이 하는 나라 가운데 하나예요. 비행기, 곡물, 천연가스 등을 많이 수출하고, 자동차·휴대 전화·옷 같은 물건은 많이 수입해요.',
     realCulture:'미국의 영화와 음악은 세계 여러 나라에서 사랑받고 있어요. 문화가 알려지면 그 나라 물건에 대한 관심도 커져요.',
-    protect:{item:'자동차',who:'자동차 공장 노동자',sellers:['KR','CN'],
+    protect:{item:'자동차',who:'자동차 공장 노동자',sellers:['KR','JP','DE','CN'],
       real:'미국은 자기 나라 자동차 산업과 일자리를 지키려고 수입 자동차에 관세를 매기기도 해요.'},
-    rival:'AU', realCompete:'곡물, 소고기, 천연가스를 파는 나라들은 서로 경쟁해요. 오스트레일리아도 이런 물건을 많이 수출하는 나라예요.',
+    rival:'BR', realCompete:'미국과 브라질은 콩, 옥수수, 소고기를 두고 세계 시장에서 경쟁해요. 특히 중국에 콩을 누가 더 많이 파는지를 두고 겨뤄요.',
     supply:{item:'희토류',from:'CN',why:'자기 나라 산업을 지키겠다며 희토류 수출을 제한하겠다고 했어요',
       use:'희토류는 휴대 전화, 전기 자동차, 기계를 만들 때 꼭 필요한 귀한 광물이에요',
       real:'세계 희토류의 대부분은 중국에서 생산돼요. 중국이 희토류 수출을 제한하자 여러 나라가 희토류를 사 오는 나라를 늘리려고 노력하고 있어요.'},
     fta:'KR', ftaReal:'미국은 2012년 우리나라와 FTA(한미 FTA)를 맺었어요. 그 뒤 두 나라 사이의 무역이 크게 늘었어요.'
   },
-  CL:{n:'칠레',s:'칠레',color:'#2f5fb0',
+  BR:{n:'브라질',s:'브라질',cont:'아메리카',color:'#7cb342',
+    exports:{soy:18,iron:14,beef:13,coffee:10}, slots:2,
+    needs:[{it:'fertilizer',p:11,miss:{l:-6,i:-4}},{it:'machine',p:11,miss:{i:-8}},{it:'electronics',p:10,miss:{l:-6}}],
+    partners:['CN','US','DE','SA','KR','JP'],
+    sells:['soy','coffee','beef','iron','grain','chicken','fruit'],
+    wants:['fertilizer','machine','electronics','phone','chip','car','oil','medicine'],
+    intro:'땅이 아주 넓어 콩, 커피, 소고기를 많이 생산하는 농업 강국이에요. 철광석도 많이 나요.',
+    realSpec:'브라질은 세계에서 콩과 커피를 가장 많이 수출하는 나라예요. 농사에 필요한 비료는 많이 수입해요.',
+    realCulture:'브라질의 축구와 삼바 축제는 세계 여러 나라에서 사랑받고 있어요.',
+    protect:{item:'기계',who:'공장 노동자',sellers:['CN','DE'],
+      real:'브라질은 자기 나라 공장을 키우려고 외국 공산품에 비교적 높은 관세를 매겨 왔어요.'},
+    rival:'US', realCompete:'미국과 브라질은 콩, 옥수수, 소고기를 두고 세계 시장에서 경쟁해요. 특히 중국에 콩을 누가 더 많이 파는지를 두고 겨뤄요.',
+    supply:{item:'비료',from:null,fromName:'러시아',head:'전쟁 때문에 러시아에서 오던 비료가 크게 줄었어요',
+      use:'비료가 없으면 콩과 커피 농사가 잘되지 않아요',
+      real:'2022년 전쟁으로 러시아에서 오던 비료가 줄자, 비료를 많이 수입하던 브라질 농민들은 큰 어려움을 겪었어요.'},
+    fta:null, ftaReal:FTA_GENERIC
+  },
+  CL:{n:'칠레',s:'칠레',cont:'아메리카',color:'#2f5fb0',
+    exports:{copper:19,fruit:10}, slots:2,
+    needs:[{it:'car',p:12,miss:{l:-5}},{it:'oil',p:11,miss:{i:-6,l:-4}},{it:'phone',p:10,miss:{l:-6}}],
+    partners:['CN','US','KR','JP','BR','DE'],
     sells:['copper','fruit'],
-    wants:['car','phone','oil','machine','clothes']}
+    wants:['car','phone','oil','machine','clothes','electronics'],
+    intro:'남북으로 아주 긴 나라로, 세계에서 구리가 가장 많이 나요. 과일 농사도 잘돼요.',
+    realSpec:'칠레는 세계에서 구리를 가장 많이 생산하고 수출하는 나라예요. 남반구에 있어서 북반구가 겨울일 때 여름 과일을 수출할 수 있어요.',
+    realCulture:CULTURE_GENERIC,
+    protect:{item:'밀',who:'밀 농민',sellers:['US'],
+      real:'칠레는 무역을 아주 활발히 하는 나라지만, 밀처럼 농민 생활과 관계가 깊은 작물은 값이 크게 흔들리지 않도록 관리해 왔어요.'},
+    rival:'US', realCompete:'구리를 캐는 나라는 칠레 말고도 페루, 미국 등 여러 나라가 있어요. 그래서 칠레는 더 효율적으로 구리를 캐는 기술에 힘쓰고 있어요.',
+    supply:{item:'원유',from:'US',why:'자기 나라에서 쓸 연료가 모자라 수출을 줄이겠다고 했어요',
+      use:'원유가 없으면 트럭과 광산 기계를 움직일 수 없어요',
+      real:'원유를 수입하는 나라들은 원윳값이 오르거나 공급이 줄면 물가가 올라 어려움을 겪어요. 그래서 여러 나라에서 나누어 사 오려고 노력해요.'},
+    fta:'KR', ftaReal:'칠레는 2004년 우리나라와 FTA를 맺었어요. 우리나라가 처음으로 FTA를 맺은 나라가 바로 칠레예요.'
+  },
+  AU:{n:'오스트레일리아',s:'호주',cont:'오세아니아',color:'#c4572c',
+    exports:{iron:14,coal:11,beef:12,grain:10,gas:13}, slots:3,
+    needs:[{it:'car',p:14,miss:{l:-6}},{it:'phone',p:12,miss:{l:-6}},{it:'oil',p:12,miss:{i:-8,l:-4}}],
+    partners:['CN','JP','KR','US','IN','SA'],
+    sells:['iron','coal','beef','grain','gas'],
+    wants:['car','phone','machine','oil','clothes','electronics','medicine'],
+    intro:'땅이 아주 넓고 철광석·석탄 같은 자원과 소·밀이 풍부한 나라예요.',
+    realSpec:'오스트레일리아는 철광석을 세계에서 가장 많이 수출하는 나라예요. 자동차는 2017년부터 직접 만들지 않고 모두 수입해요.',
+    realCulture:CULTURE_GENERIC,
+    protect:{item:'자동차',who:'자동차 공장 노동자',sellers:['KR','CN','JP'],
+      real:'오스트레일리아는 값싼 수입 자동차와의 경쟁, 높은 생산비 같은 여러 까닭으로 2017년에 마지막 자동차 공장이 문을 닫았어요.'},
+    rival:'US', realCompete:'소고기와 밀을 파는 나라들은 서로 경쟁해요. 미국도 소고기와 곡물을 많이 수출하는 나라예요.',
+    supply:{item:'반도체',from:'KR',why:'전 세계에 반도체가 모자라 우리에게 보낼 양을 줄이겠다고 했어요',
+      use:'반도체는 자동차와 휴대 전화에 꼭 들어가는 부품이에요',
+      real:'2021년 전 세계에 반도체가 모자라 여러 나라의 자동차 회사들이 차를 제때 만들지 못했어요.'},
+    fta:'KR', ftaReal:'오스트레일리아와 우리나라는 2014년에 FTA를 맺었어요. 그 뒤 우리는 소고기를, 오스트레일리아는 우리 자동차를 더 싸게 살 수 있게 되었어요.'
+  }
 };
-const ALLC = ['KR','CN','US','VN','SA','AU','CL'];
-const PLAYABLE = ['KR','US','CN','SA','AU','VN'];
+const ALLC = ['KR','CN','JP','IN','VN','SA','DE','FR','EG','US','BR','CL','AU'];
+const PLAYABLE = ALLC;
 
 // ---------- 낱말 뜻풀이 ----------
 const TERMS = {
@@ -371,6 +475,7 @@ const TERMS = {
   '자급자족':'필요한 것을 다른 곳에서 사 오지 않고 스스로 모두 만들어 쓰는 것이에요.',
   '구호품':'재난을 당한 사람들을 돕기 위해 보내는 먹을거리, 옷, 약 같은 물건이에요.',
   '공정 무역':'물건을 만든 사람에게 정당한 값을 치르고, 환경과 사람을 존중하며 하는 무역이에요.',
+  '서비스 무역':'물건이 아니라 관광, 운송, 소프트웨어처럼 눈에 보이지 않는 서비스를 사고파는 무역이에요. 외국 관광객이 와서 쓰는 돈도 여기에 들어가요.',
   '경쟁':'비슷한 물건을 파는 나라들이 서로 더 많이 팔려고 겨루는 것이에요.'
 };
 const TERM_KEYS = Object.keys(TERMS).sort((a,b)=>b.length-a.length);
@@ -441,7 +546,7 @@ function saveGame(){ if(!G) return; prof().save = G; STORE.last = G.name; saveSt
 let G = null;
 const TURNS = 10;
 function newGame(name, me){
-  const partners = ALLC.filter(c=>c!==me);
+  const partners = C[me].partners.slice();
   const rel={}, cum={}, cumExp={}, tu={}, tt={}, fta={};
   partners.forEach(p=>{ rel[p]=55; cum[p]=0; cumExp[p]=0; tu[p]=0; tt[p]=0; fta[p]=false; });
   return {name, me, partners, turn:0, money:60, life:60, ind:60, rel, cum, cumExp, tu, tt, fta,
@@ -495,7 +600,10 @@ function importOffer(p,need){
   return {price:Math.round(price), refuse:r<25};
 }
 function bestExportItemTo(p){ const o=exportOffer(p); return o?o.it:Object.keys(me().exports)[0]; }
-function topExport(){ const ex=me().exports; return Object.keys(ex).sort((a,b)=>ex[b]-ex[a])[0]; }
+// 서비스(관광·운하·소프트웨어)를 뺀 물건 가운데 고르기
+function goodsTo(p){ const ex=me().exports; return Object.keys(ex).filter(i=>!isSvc(i) && C[p].wants.includes(i)).sort((a,b)=>ex[b]-ex[a])[0] || null; }
+function topExport(){ const ex=me().exports; const k=Object.keys(ex).filter(i=>!isSvc(i)); return (k.length?k:Object.keys(ex)).sort((a,b)=>ex[b]-ex[a])[0]; }
+function topAny(){ const ex=me().exports; return Object.keys(ex).sort((a,b)=>ex[b]-ex[a])[0]; }
 
 // ---------- 화면 공통 ----------
 function topBar(){
@@ -540,7 +648,7 @@ function rulesHTML(){
 }
 
 // ---------- 세계 지도 ----------
-const LBL_OFF = {KR:[14,-34],CN:[-84,-10],VN:[-78,8],SA:[-36,-46],AU:[-40,22],US:[-36,-50],CL:[-92,-14]};
+const LBL_OFF = {KR:[10,-36],CN:[-84,-10],JP:[16,4],VN:[-78,8],IN:[-74,10],SA:[0,-44],DE:[-14,-42],FR:[-70,6],EG:[-62,14],AU:[-40,22],US:[-36,-50],BR:[-40,-50],CL:[-92,-14]};
 function arcD(a,b){
   const [x1,y1]=MAP.pt[a],[x2,y2]=MAP.pt[b];
   const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1, k=Math.min(70,len*0.28);
@@ -549,13 +657,14 @@ function arcD(a,b){
 }
 function mapSVG(o){
   o=o||{};
-  const meC = G?G.me:'KR', parts = ALLC.filter(c=>c!==meC);
-  const VB=[170,10,735,440];
+  const meC = G?G.me:'KR', parts = (G?G.partners:C.KR.partners);
+  const VB=[95,10,900,450];
   let s=`<svg class="wmap${o.sm?' sm':''}" viewBox="${VB.join(' ')}" xmlns="http://www.w3.org/2000/svg">
    <rect x="${VB[0]}" y="${VB[1]}" width="${VB[2]}" height="${VB[3]}" fill="#cfeaf2"/>
    <path d="${MAP.grat}" fill="none" stroke="#fff" stroke-width=".6" opacity=".8"/>
    <path d="${MAP.land}" fill="#efe6d2" stroke="#fff" stroke-width=".5"/>`;
   ALLC.forEach(c=>{
+    if(c!==meC && !parts.includes(c)){ s+=`<path d="${MAP.c[c]}" fill="#d9ccb0" stroke="#fff" stroke-width=".5"/>`; return; }
     const dim = o.focus && c!==o.focus && c!==meC;
     s+=`<path d="${MAP.c[c]}" fill="${C[c].color}" opacity="${dim?.28:(c===meC?1:.85)}" stroke="${c===meC?'#ffd54a':'#fff'}" stroke-width="${c===meC?2.2:.6}"/>`;
   });
@@ -593,7 +702,7 @@ function mapSVG(o){
     });
   }
   if(o.focus){ const [fx,fy]=MAP.pt[o.focus]; s+=`<text x="${fx}" y="${fy-10}" font-size="26" text-anchor="middle">❗<animate attributeName="y" values="${fy-10};${fy-18};${fy-10}" dur="1s" repeatCount="indefinite"/></text>`; }
-  if(o.flows||o.plan) s+=`<rect x="178" y="402" width="230" height="40" rx="10" fill="#fff" opacity=".85"/><text x="188" y="418" font-size="13" fill="#1e9e5a">━ 수출 (우리가 파는 것)</text><text x="188" y="435" font-size="13" fill="#2d6cdf">━ 수입 (우리가 사 오는 것)</text>`;
+  if(o.flows||o.plan) s+=`<rect x="103" y="412" width="230" height="40" rx="10" fill="#fff" opacity=".85"/><text x="113" y="428" font-size="13" fill="#1e9e5a">━ 수출 (우리가 파는 것)</text><text x="113" y="445" font-size="13" fill="#2d6cdf">━ 수입 (우리가 사 오는 것)</text>`;
   return s+'</svg>';
 }
 function evImg(id,sm){ return `<img class="evimg${sm?' sm':''}" src="images/ev_${id}.webp" alt="" loading="lazy" onerror="this.remove()">`; }
@@ -677,7 +786,7 @@ function pickCountry(name){
   app.innerHTML = `<div class="card"><div class="eyebrow">${esc(name)} 대통령님, 어느 나라를 이끌까요?</div>
     <h2 style="margin:4px 0 12px">나라 고르기</h2>
     ${unlocked?'':'<div class="notice">처음에는 <b>대한민국</b>의 대통령이 되어야 해요. 대한민국으로 임기를 끝까지 마치면 다른 나라도 열려요.</div>'}
-    <div class="cgrid">${PLAYABLE.map(c=>{
+    ${['아시아','유럽','아프리카','아메리카','오세아니아'].map(ct=>`<h3 style="margin:16px 0 8px">${ct}</h3><div class="cgrid">${PLAYABLE.filter(c=>C[c].cont===ct).map(c=>{
       const lock = c!=='KR' && !unlocked; const d=C[c];
       return `<div class="ccard${lock?' lock':''}">${insetSVG(c)}<h3>${d.n}</h3>
         <div class="muted">${d.intro}</div>
@@ -685,7 +794,7 @@ function pickCountry(name){
         <div style="font-size:15px">부족한 것: ${d.needs.map(n=>itemE(n.it)+itemName(n.it)).join(', ')}</div>
         ${P.done[c]?'<div class="done">임기 완료</div>':''}
         <div class="actions" style="justify-content:flex-start">${lock?'<span class="muted">대한민국을 먼저 끝내면 열려요</span>':`<button class="btn small" onclick="startGame('${c}')">이 나라로 시작</button>`}</div></div>`;
-    }).join('')}</div>
+    }).join('')}</div>`).join('')}
     <div class="actions"><button class="btn ghost small" onclick="home()">← 처음으로</button></div></div>`;
 }
 function startGame(c){
@@ -707,13 +816,16 @@ function render(){
 function dreamScreen(){
   const d = me();
   const needs = d.needs.map(n=>`<div class="dline" style="animation-delay:${.6+d.needs.indexOf(n)*.9}s">${itemE(n.it)} <b>${jo(itemName(n.it),'이')}</b> 없어요! ${MISS_TXT[n.it]||''}</div>`).join('');
-  const ex = Object.keys(d.exports).slice(0,2).map(itemName).join('와 ');
+  const gd = Object.keys(d.exports).filter(i=>!isSvc(i)).slice(0,2).map(itemName);
+  const ex = gd.length===2 ? jo(gd[0],'과')+' '+gd[1] : (gd[0]||'물건');
+  const svc = Object.keys(d.exports).filter(isSvc);
   const delay = .6+d.needs.length*.9;
   app.innerHTML = `<div class="card dream">
     ${evImg('dream')}
     <p>대통령 취임식 전날 밤, 이상한 꿈을 꾸었어요.<br>꿈속의 ${jo(d.n,'은')} 다른 나라와 <b>아무것도 주고받지 않는 나라</b>였어요. 필요한 것은 모두 스스로 만들어 써야 했지요.</p>
     ${needs}
     <div class="dline" style="animation-delay:${delay}s">창고에는 팔지 못한 ${jo(ex,'이')} 산처럼 쌓였어요. 팔 곳이 없으니 돈을 벌 수 없어요.</div>
+    ${svc.length?`<div class="dline" style="animation-delay:${delay+.45}s">${svc.includes('tour')?'외국 관광객도 오지 않고, ':''}${svc.includes('canal')?'운하를 지나가는 배도 없고, ':''}${svc.includes('software')?'외국 회사들이 우리 프로그램을 쓰지 않아 ':''}돈이 들어오지 않아요.</div>`:''}
     <div class="dline" style="animation-delay:${delay+.9}s">국민들은 "왜 우리나라에는 없는 게 이렇게 많지?" 하며 한숨을 쉬었어요.</div>
     <div class="actions" style="opacity:0;animation:fadein .5s ${delay+1.6}s forwards"><button class="btn gold" onclick="dreamWake()">잠에서 깨어나기</button></div>
   </div>`;
@@ -783,6 +895,7 @@ function marketScreen(){
     return `<button class="opt${on?' sel':''}" onclick="pickExp('${p}')">
       <div style="display:flex;gap:8px;align-items:center">${badge(p,true)} <b>${N(p)}</b></div>
       <div>${itemE(o.it)} ${itemName(o.it)} 수출 · 예상 <span class="price">🪙 ${o.value}</span></div>
+      ${isSvc(o.it)?`<div>${gl('서비스 무역')}</div>`:''}
       <div>${relHTML(p)}</div>
       <div>${G.tu[p]>0?`<span class="tag red">관세 ${Math.round(G.tu[p]*100)}%</span>`:''}${G.fta[p]?'<span class="tag green">FTA</span>':''}${o.risky?'<span class="tag red">주문 취소 위험</span>':''}${G.cum[p]>=30?'<span class="tag red">우리만 많이 팔았어요</span>':''}</div>
     </button>`;
@@ -942,7 +1055,7 @@ const EV = {
     title(c){ return `${N(c.P)}에 큰 홍수가 났어요`; },
     auto(c){ add('i',-4); return `${N(c.P)}의 공장과 항구가 멈추자, 그 나라와 주고받던 물건이 늦어져 우리 공장도 잠시 멈췄어요. (산업 기술 -4)`; },
     story(c){ const s=sellsNeed(c.P), b=exportOffer(c.P);
-      return `${N(c.P)}에 큰 홍수가 나서 집과 공장, 항구가 물에 잠겼어요. ${N(c.P)}${jong(N(c.P))?'은':'는'} ${s?`우리에게 ${itemName(s.it)}${jong(itemName(s.it))?'을':'를'} 팔고, `:''}${b?`우리 ${itemName(b.it)}${jong(itemName(b.it))?'을':'를'} 사 주던 `:'우리와 무역하던 '}나라예요. ${N(c.P)} 대통령이 도움을 청했어요.`; },
+      return `${N(c.P)}에 큰 홍수가 나서 집과 공장, 항구가 물에 잠겼어요. ${N(c.P)}${jong(N(c.P))?'은':'는'} ${s?`우리에게 ${itemName(s.it)}${jong(itemName(s.it))?'을':'를'} 팔고, `:''}${b?(isSvc(b.it)?`우리 ${itemName(b.it)} 서비스를 이용하던 `:`우리 ${itemName(b.it)}${jong(itemName(b.it))?'을':'를'} 사 주던 `):'우리와 무역하던 '}나라예요. ${N(c.P)} 대통령이 도움을 청했어요.`; },
     adv(c){ return [
       ['🕊️','외교부 장관','어려울 때 돕는 것이 진짜 친구예요.'],
       ['💰','재정 장관','우리 금고도 넉넉하지 않아요.'],
@@ -966,7 +1079,7 @@ const EV = {
       const sItem = can.find(i=>food.includes(i)) || can[0] || C[P].sells[0];
       return {P, sItem}; },
     title(c){ return `${N(c.P)}${jong(N(c.P))?'이':'가'} FTA를 맺자고 해요`; },
-    story(c){ const ex=itemName(bestExportItemTo(c.P)), s=itemName(c.sItem);
+    story(c){ const ex=itemName(goodsTo(c.P)||bestExportItemTo(c.P)), s=itemName(c.sItem);
       return `${N(c.P)}${jong(N(c.P))?'이':'가'} 서로의 물건에 붙이는 관세를 없애자는 약속, 자유 무역 협정(FTA)을 맺자고 제안했어요. FTA를 맺으면 ${N(c.P)}에 우리 ${ex}${jong(ex)?'을':'를'} 더 많이 팔 수 있고, ${N(c.P)}의 ${s}도 더 싸게 사 올 수 있어요.`; },
     adv(c){ const s=itemName(c.sItem); return [
       ['🏭','산업부 장관','우리 물건을 더 많이 팔 기회예요!'],
@@ -980,15 +1093,15 @@ const EV = {
       {label:'제안 거절하기',cost:0,go(){ rel(P,-6); G.comp[P]=0.85;
         return `${N(P)}${jong(N(P))?'은':'는'} 아쉬워하며 다른 나라와 FTA를 맺었어요. 이제 ${N(P)}에서는 그 나라 물건이 우리 물건보다 싸게 팔려서, 우리 물건이 덜 팔리게 되었어요.`; }}]; },
     concept:['자유 무역 협정(FTA)','FTA는 나라끼리 관세를 없애거나 줄여서 물건을 더 자유롭게 사고팔기로 한 약속이에요. 무역이 늘어나는 좋은 점이 있지만, 값싼 수입품과 경쟁하게 되는 사람들도 생겨서 그들을 돕는 노력도 필요해요.'],
-    real(){ return G.me==='KR'?me().ftaReal:me().ftaReal; }
+    real(){ return me().ftaReal; }
   },
   // 5. 관세 갈등
   tariff:{
     icon:'🧱',
-    ctx(){ const list=G.partners.filter(p=>!G.fta[p] && exportOffer(p)); const P=pickBy(list.length?list:G.partners,p=>G.cumExp[p]); return {P}; },
+    ctx(){ let list=G.partners.filter(p=>!G.fta[p] && goodsTo(p)); if(!list.length) list=G.partners.filter(p=>goodsTo(p)); const P=pickBy(list.length?list:G.partners,p=>G.cumExp[p]); return {P}; },
     title(c){ return `${N(c.P)}${jong(N(c.P))?'이':'가'} 관세를 올렸어요`; },
     auto(c){ G.tu[c.P]=0.3; return `이제 ${N(c.P)}에서 우리 물건값이 비싸져 덜 팔릴 거예요. (우리 물건에 관세 30%)`; },
-    story(c){ const ex=itemName(bestExportItemTo(c.P));
+    story(c){ const ex=itemName(goodsTo(c.P)||topExport());
       return `${N(c.P)}${jong(N(c.P))?'이':'가'} 자기 나라 공장과 일자리를 지키겠다며, 우리 ${ex}에 붙이는 관세를 크게 올렸어요. 관세가 붙으면 ${N(c.P)} 사람들은 우리 ${ex}${jong(ex)?'을':'를'} 더 비싸게 사야 해요.`; },
     adv(c){ return [
       ['😤','강경파 의원',`우리도 ${N(c.P)} 물건에 관세를 똑같이 올려요! 당하고만 있을 수는 없어요.`],
@@ -1031,14 +1144,23 @@ const EV = {
   compete:{
     icon:'🏁',
     ctx(){ return {R:me().rival}; },
-    title(c){ return `${N(c.R)}${jong(N(c.R))?'이':'가'} 비슷한 물건을 싸게 팔아요`; },
-    story(c){ const ex=itemName(topExport());
+    title(c){ return me().tourRival ? `${N(c.R)}${jong(N(c.R))?'이':'가'} 관광객을 끌어모아요` : `${N(c.R)}${jong(N(c.R))?'이':'가'} 비슷한 물건을 싸게 팔아요`; },
+    story(c){ if(me().tourRival) return `${N(c.R)}도 아름다운 관광지를 널리 알리며 관광객을 끌어모으고 있어요. 우리나라를 찾던 외국 관광객들이 ${N(c.R)}${jong(N(c.R))?'으로':'로'} 여행지를 바꿀까 고민하고 있어요.`;
+      const ex=itemName(topExport());
       return `${N(c.R)}에서도 우리 ${ex}${jong(ex)?'과':'와'} 비슷한 물건을 만들어 더 싸게 팔기 시작했어요. 우리 물건을 사던 나라들이 ${N(c.R)}의 물건을 살까 고민하고 있어요.`; },
     adv(c){ return [
-      ['🔬','기술 연구원','돈을 들여 더 좋은 물건을 만들어요. 품질로 이겨요!'],
+      me().tourRival?['🎭','문화부 장관','관광지를 깨끗하게 가꾸고, 친절하고 안전한 여행이 되도록 준비해요.']:['🔬','기술 연구원','돈을 들여 더 좋은 물건을 만들어요. 품질로 이겨요!'],
       ['💼','기업인','값을 확 내려서 손님을 지켜요.'],
       ['😤','강경파 의원',`${N(c.R)} 물건이 우리나라에 못 들어오게 막아 버려요.`]]; },
-    choices(c){ const R=c.R; const ex=itemName(topExport()); return [
+    choices(c){ const R=c.R; const ex=itemName(topExport());
+      if(me().tourRival) return [
+      {label:'관광지와 안내 서비스를 좋게 가꾸기',cost:10,go(){ add('i',8); add('l',3);
+        return '유적지를 깨끗하게 가꾸고 여러 나라 말로 된 안내판과 친절한 안내원을 늘렸어요. 다녀간 관광객들의 칭찬이 퍼지면서 관광객이 다시 늘기 시작했어요.'; }},
+      {label:'여행 요금을 크게 내리기',cost:0,go(){ add('i',-4); add('l',-3); add('m',-4);
+        return '관광객은 지켰지만, 관광지에서 일하는 사람들이 버는 돈이 줄어 살림이 빠듯해졌어요.'; }},
+      {label:`${N(R)} 물건 들여오지 않기`,cost:0,go(){ rel(R,-15); G.tu[R]=Math.max(G.tu[R],0.2);
+        return `${N(R)}${jong(N(R))?'은':'는'} 화가 나서 우리와의 무역을 줄였어요. 관광객 경쟁은 그대로인데 이웃 나라만 잃었어요.`; }}];
+      return [
       {label:'새로운 기술 개발에 투자하기',cost:10,go(){ add('i',12);
         return `우리 연구원들이 더 뛰어난 ${ex}${jong(ex)?'을':'를'} 만들어 냈어요. 손님들이 다시 우리 물건을 찾기 시작했어요.`; }},
       {label:'값을 크게 내리기',cost:0,go(){ add('i',-4); add('l',-3); add('m',-4);
@@ -1072,32 +1194,44 @@ const EV = {
   // 8. 공급 중단 — 수입처 다양화
   supply:{
     icon:'⛔',
-    ctx(){ const s=me().supply; return {P:s.from,item:s.item}; },
+    ctx(){ const s=me().supply; return {P:s.from,item:s.item,from:s.from?N(s.from):s.fromName}; },
     title(c){ return `${c.item}${jong(c.item)?'이':'가'} 들어오지 않아요!`; },
     auto(c){ add('l',-5); add('i',-3); return `${c.item}${jong(c.item)?'이':'가'} 모자라 국민 생활과 공장이 흔들리고 있어요. (국민 생활 -5, 산업 기술 -3)`; },
-    story(c){ const s=me().supply; return `${N(c.P)}${jong(N(c.P))?'이':'가'} ${s.why}. ${s.use}. 그런데 우리는 ${c.item}의 대부분을 ${N(c.P)}에서만 사 왔어요!`; },
-    adv(c){ return [
+    story(c){ const s=me().supply; const head = c.P ? `${N(c.P)}${jong(N(c.P))?'이':'가'} ${s.why}` : s.head;
+      return `${head}. ${s.use}. 그런데 우리는 ${c.item}의 ${c.P?'대부분을':'많은 양을'} ${c.from}에서${c.P?'만':''} 사 왔어요!`; },
+    adv(c){ if(!c.P) return [
+      ['📜','통상 장관','가까운 나라들에 급한 만큼이라도 나누어 달라고 부탁해 봐요.'],
+      ['🏭','산업부 장관','이번 기회에 여러 나라에서 나누어 사 오도록 바꿔요.'],
+      ['💰','재정 장관','비싸더라도 우리가 직접 만들 방법을 찾아볼 수도 있어요.']];
+      return [
       ['📜','통상 장관',`${N(c.P)}과(와) 대화해서 급한 만큼이라도 팔아 달라고 부탁해요.`.replace('과(와)',jong(N(c.P))?'과':'와')],
       ['🏭','산업부 장관','이번 기회에 여러 나라에서 나누어 사 오도록 바꿔요.'],
       ['😤','강경파 의원',`${N(c.P)}에 강하게 항의해요!`]]; },
-    choices(c){ const P=c.P; return [
-      {label:'대화로 급한 양 구하기',cost:0,go(){ rel(P,4); add('l',3);
-        return `${N(P)}${jong(N(P))?'이':'가'} 사정을 이해하고 급한 만큼은 팔아 주었어요. 하지만 언제 또 이런 일이 생길지 몰라요.`; }},
+    choices(c){ const P=c.P;
+      const list = [
+      P ? {label:'대화로 급한 양 구하기',cost:0,go(){ rel(P,4); add('l',3);
+        return `${N(P)}${jong(N(P))?'이':'가'} 사정을 이해하고 급한 만큼은 팔아 주었어요. 하지만 언제 또 이런 일이 생길지 몰라요.`; }}
+        : {label:'가까운 나라들에 급히 도움 청하기',cost:0,go(){ relAll(1); add('l',3);
+        return '가까운 나라들이 조금씩 나누어 주어 급한 고비는 넘겼어요. 하지만 언제 또 이런 일이 생길지 몰라요.'; }},
       {label:'여러 나라에서 나누어 사 오기 (수입처 다양화)',cost:8,go(){ add('l',5); add('i',3); relAll(2);
         return '여러 나라에서 나누어 사 오기로 했어요. 이제 한 나라에 문제가 생겨도 덜 흔들리게 되었어요. 새로 거래하게 된 나라들과도 가까워졌어요.'; }},
       {label:'비싸더라도 우리가 직접 만들기',cost:14,go(){ add('l',3);
         return '직접 만들 수는 있었지만 돈이 아주 많이 들었어요. 다른 나라에서 사 오면 훨씬 쌌을 텐데...'; }},
-      {label:`${N(P)}에 강하게 항의하기`,cost:0,go(){ rel(P,-12);
-        return `${N(P)}${jong(N(P))?'은':'는'} 기분이 상해 오히려 대화가 더 어려워졌어요. 물건은 여전히 들어오지 않아요.`; }}]; },
+      P ? {label:`${N(P)}에 강하게 항의하기`,cost:0,go(){ rel(P,-12);
+        return `${N(P)}${jong(N(P))?'은':'는'} 기분이 상해 오히려 대화가 더 어려워졌어요. 물건은 여전히 들어오지 않아요.`; }} : null];
+      return list.filter(Boolean); },
     concept:['수입처 다양화','한 나라에서만 물건을 사 오면, 그 나라에 문제가 생겼을 때 우리도 큰 어려움을 겪어요. 그래서 여러 나라에서 나누어 사 오는 수입처 다양화가 중요해요. 이것도 서로 기대어 사는 상호 의존 때문에 생기는 일이에요.'],
     real(){ return me().supply.real; }
   },
   // 9. 품질 문제 — 신뢰
   quality:{
     icon:'🔧',
-    ctx(){ const P=pickBy(G.partners.filter(p=>exportOffer(p)),p=>G.cumExp[p]); return {P, it:bestExportItemTo(P)}; },
+    ctx(){ let ok=G.partners.filter(p=>goodsTo(p)); if(!ok.length) ok=G.partners.filter(p=>exportOffer(p)); const P=pickBy(ok.length?ok:G.partners,p=>G.cumExp[p]); return {P, it:goodsTo(P)||bestExportItemTo(P)}; },
     title(){ return '우리 물건에 문제가 생겼어요'; },
-    story(c){ const ex=itemName(c.it); return `${N(c.P)}에 판 우리 ${ex} 가운데 일부가 고장 났다는 소식이 들려요. 아직은 많은 사람이 모르고 있어요.`; },
+    story(c){ const ex=itemName(c.it);
+      const raw=['oil','gas','iron','coal','copper','beef','grain','rice','soy','coffee','fruit','chicken'].includes(c.it);
+      const what = raw ? '약속한 품질에 못 미친다는' : c.it==='software' ? '오류가 생겨 제대로 움직이지 않는다는' : '고장 났다는';
+      return `${N(c.P)}에 판 우리 ${ex} 가운데 일부가 ${what} 소식이 들려요. 아직은 많은 사람이 모르고 있어요.`; },
     adv(){ return [
       ['💼','기업인','조용히 넘어가면 아무도 모를 수도 있어요.'],
       ['🛡️','소비자원장','잘못을 인정하고 고쳐 주는 것이 믿음을 지키는 길이에요.'],
@@ -1256,7 +1390,7 @@ function endingScreen(){
     <div class="eyebrow">${esc(G.name)} 대통령의 5년 임기가 끝났어요</div>
     <div class="titlebig">${J.t[1]}</div>
     <p>${J.t[2]}</p>
-    ${G.firstUnlock?'<div class="notice good">대한민국 임기를 마쳐서 <b>미국, 중국, 사우디아라비아, 오스트레일리아, 베트남</b>이 열렸어요! 다른 나라의 대통령이 되어 보면, 그 나라의 처지에서 무역을 생각해 볼 수 있어요.</div>':''}
+    ${G.firstUnlock?'<div class="notice good">대한민국 임기를 마쳐서 <b>다른 12개 나라</b>가 모두 열렸어요. 다른 나라의 대통령이 되어 보면, 그 나라의 처지에서 무역을 생각해 볼 수 있어요.</div>':''}
   </div>
   <div class="card">
     <h3 style="margin-top:0">대통령 성적표 · ${badge(G.me,true)} ${N(G.me)}</h3>
