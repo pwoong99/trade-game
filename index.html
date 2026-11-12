@@ -160,7 +160,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <script src="map-data.js"></script>
 <script>
 'use strict';
-const VERSION = 'v1.3';
+const VERSION = 'v1.4';
 /* =========================================================
    어린이 대통령의 무역 교실 — 6학년 사회 '세계 여러 나라와의 경제 교류'
    만든이: 푸르이든
@@ -182,7 +182,8 @@ const MISS_TXT = {
   car:'자동차를 사려면 몇 년을 기다려야 해요.',
   machine:'공장을 돌릴 기계가 없어 일을 할 수 없어요.',
   phone:'휴대 전화가 귀해져 연락하기가 어려워졌어요.',
-  chip:'부품이 없어 스마트폰 공장이 멈췄어요.'
+  chip:'부품이 없어 스마트폰 공장이 멈췄어요.',
+  clothes:'옷이 모자라 옷값이 크게 올랐어요.'
 };
 
 // ---------- 나라 ----------
@@ -196,7 +197,7 @@ const C = {
       {it:'grain',p:9,miss:{l:-8}}
     ],
     sells:['chip','car','phone','machine','ship'],
-    wants:['oil','iron','grain','gas','coal','beef','copper','fruit','clothes','coffee'],
+    wants:['oil','iron','grain','gas','coal','beef','copper','fruit','clothes','coffee','plane'],
     intro:'산이 많고 자원이 적지만, 사람들의 기술이 뛰어난 나라예요.',
     realSpec:'우리나라는 원유가 거의 나지 않아 쓰는 원유를 거의 모두 수입해요. 대신 반도체, 자동차, 배 같은 물건을 만들어 세계 여러 나라에 많이 수출해요.',
     realCulture:'한국 드라마와 노래(한류)가 세계에서 인기를 끌면서 한국의 화장품, 라면 같은 식품의 수출도 함께 늘었어요.',
@@ -268,18 +269,52 @@ const C = {
       real:'2020년 코로나19로 중국 공장들이 멈추자, 부품을 받지 못한 여러 나라의 공장도 함께 멈췄어요.'},
     fta:null, ftaReal:'세계 여러 나라는 FTA를 맺어 서로 관세를 낮추고 무역을 늘리고 있어요.'
   },
-  CN:{n:'중국',s:'중국',color:'#c8102e',
+  CN:{n:'중국',s:'중국',color:'#c8102e',playable:true,
+    exports:{phone:14,car:14,machine:13,clothes:10}, slots:3,
+    needs:[
+      {it:'chip',p:14,miss:{i:-10}},
+      {it:'iron',p:10,miss:{i:-8}},
+      {it:'oil',p:13,miss:{i:-6,l:-4}}
+    ],
     sells:['electronics','clothes','machine','chip','phone','car'],
-    wants:['chip','iron','oil','copper','coal','beef','machine']},
-  US:{n:'미국',s:'미국',color:'#3c3b6e',
-    sells:['grain','oil','gas','plane','machine','beef','chicken'],
-    wants:['car','chip','phone','clothes','coffee','machine','oil']},
+    wants:['chip','iron','oil','copper','coal','beef','machine','plane','grain','gas'],
+    intro:'사람이 아주 많고 공장이 많아 여러 가지 물건을 대량으로 만드는 나라예요.',
+    realSpec:'중국은 세계에서 물건을 가장 많이 수출하는 나라예요. 공장에서 물건을 만드는 데 필요한 철광석, 원유, 반도체는 많이 수입해요.',
+    realCulture:'여러 나라는 박람회와 문화 행사를 열어 서로를 알리고, 무역을 함께할 친구 나라를 만들어요.',
+    protect:{item:'소고기',who:'목축 농민',sellers:['AU','US'],
+      real:'많은 나라가 자기 나라 농민을 지키려고 수입 농산물에 관세를 매기거나 들여오는 양을 정해 두어요.'},
+    rival:'VN', realCompete:'옷과 휴대 전화를 만드는 공장들이 베트남 같은 나라로 옮겨 가면서, 중국과 베트남은 서로 경쟁하는 사이가 되기도 했어요.',
+    supply:{item:'철광석',from:'AU',why:'큰 광산에 사고가 나서 철광석을 제때 보내기 어렵다고 했어요',
+      use:'철광석은 철을 만들어 건물, 자동차, 배를 짓는 데 꼭 필요해요',
+      real:'중국은 철광석의 많은 양을 오스트레일리아에서 사 와요. 그래서 다른 나라에서도 철광석을 사 오려고 먼 나라의 광산에 투자하기도 해요.'},
+    fta:'KR', ftaReal:'중국과 우리나라는 2015년에 FTA를 맺었어요. 두 나라는 서로에게 아주 큰 무역 상대예요.'
+  },
+  US:{n:'미국',s:'미국',color:'#3c3b6e',playable:true,
+    exports:{plane:22,machine:15,gas:13,beef:12,grain:11}, slots:2,
+    needs:[
+      {it:'car',p:14,miss:{l:-5,i:-3}},
+      {it:'phone',p:12,miss:{l:-6}},
+      {it:'clothes',p:10,miss:{l:-6}}
+    ],
+    sells:['grain','oil','gas','plane','machine','beef','chicken','chip'],
+    wants:['car','chip','phone','clothes','coffee','machine','oil'],
+    intro:'땅이 넓어 곡물을 많이 기르고, 비행기와 첨단 기계를 잘 만드는 큰 나라예요.',
+    realSpec:'미국은 세계에서 무역을 가장 많이 하는 나라 가운데 하나예요. 비행기, 곡물, 천연가스 등을 많이 수출하고, 자동차·휴대 전화·옷 같은 물건은 많이 수입해요.',
+    realCulture:'미국의 영화와 음악은 세계 여러 나라에서 사랑받고 있어요. 문화가 알려지면 그 나라 물건에 대한 관심도 커져요.',
+    protect:{item:'자동차',who:'자동차 공장 노동자',sellers:['KR','CN'],
+      real:'미국은 자기 나라 자동차 산업과 일자리를 지키려고 수입 자동차에 관세를 매기기도 해요.'},
+    rival:'AU', realCompete:'곡물, 소고기, 천연가스를 파는 나라들은 서로 경쟁해요. 오스트레일리아도 이런 물건을 많이 수출하는 나라예요.',
+    supply:{item:'희토류',from:'CN',why:'자기 나라 산업을 지키겠다며 희토류 수출을 제한하겠다고 했어요',
+      use:'희토류는 휴대 전화, 전기 자동차, 기계를 만들 때 꼭 필요한 귀한 광물이에요',
+      real:'세계 희토류의 대부분은 중국에서 생산돼요. 중국이 희토류 수출을 제한하자 여러 나라가 희토류를 사 오는 나라를 늘리려고 노력하고 있어요.'},
+    fta:'KR', ftaReal:'미국은 2012년 우리나라와 FTA(한미 FTA)를 맺었어요. 그 뒤 두 나라 사이의 무역이 크게 늘었어요.'
+  },
   CL:{n:'칠레',s:'칠레',color:'#2f5fb0',
     sells:['copper','fruit'],
     wants:['car','phone','oil','machine','clothes']}
 };
 const ALLC = ['KR','CN','US','VN','SA','AU','CL'];
-const PLAYABLE = ['KR','SA','AU','VN'];
+const PLAYABLE = ['KR','US','CN','SA','AU','VN'];
 
 // ---------- 낱말 뜻풀이 ----------
 const TERMS = {
@@ -533,14 +568,14 @@ function ringSVG(flows){ return mapSVG(flows?{flows,rel:true}:{rel:true}); }
 // 우리나라 확대 지도
 function insetSVG(code){
   const m=INSET[code]; if(!m) return '';
-  const [cn,[cx,cy]]=m.cap;
+  const [cn,[cx,cy]]=m.cap; const lw=[...cn].length*14+12; const lx=(cx+10+lw>m.w-4)?cx-10-lw:cx+10;
   return `<svg class="inset" viewBox="0 0 ${m.w} ${m.h}" xmlns="http://www.w3.org/2000/svg">
     <rect width="${m.w}" height="${m.h}" fill="#cfeaf2"/>
     <path d="${m.land}" fill="#efe6d2" stroke="#fff" stroke-width=".7"/>
     <path d="${m.me}" fill="${C[code].color}" stroke="#ffd54a" stroke-width="1.5"/>
     <text x="${cx}" y="${cy+5}" font-size="16" text-anchor="middle">⭐</text>
-    <rect x="${cx+10}" y="${cy-10}" width="${[...cn].length*14+12}" height="22" rx="11" fill="#fff" opacity=".9"/>
-    <text x="${cx+16}" y="${cy+6}" font-size="14" fill="#16324f">${cn}</text>
+    <rect x="${lx}" y="${cy-10}" width="${lw}" height="22" rx="11" fill="#fff" opacity=".9"/>
+    <text x="${lx+6}" y="${cy+6}" font-size="14" fill="#16324f">${cn}</text>
     <rect x="8" y="${m.h-34}" width="${[...C[code].n].length*17+20}" height="26" rx="13" fill="${C[code].color}"/>
     <text x="18" y="${m.h-15}" font-size="17" fill="#fff">${C[code].n}</text>
   </svg>`;
@@ -1177,7 +1212,7 @@ function endingScreen(){
     <div style="font-size:64px">${J.t[0]}</div>
     <div class="titlebig">${J.t[1]}</div>
     <p>${J.t[2]}</p>
-    ${G.firstUnlock?'<div class="notice good">🔓 대한민국 임기를 마쳐서 <b>사우디아라비아, 오스트레일리아, 베트남</b>이 열렸어요! 다른 나라의 대통령이 되어 보면, 그 나라의 처지에서 무역을 생각해 볼 수 있어요.</div>':''}
+    ${G.firstUnlock?'<div class="notice good">🔓 대한민국 임기를 마쳐서 <b>미국, 중국, 사우디아라비아, 오스트레일리아, 베트남</b>이 열렸어요! 다른 나라의 대통령이 되어 보면, 그 나라의 처지에서 무역을 생각해 볼 수 있어요.</div>':''}
   </div>
   <div class="card">
     <h3 style="margin-top:0">📋 대통령 성적표 · ${badge(G.me,true)} ${N(G.me)}</h3>
