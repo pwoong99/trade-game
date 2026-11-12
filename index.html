@@ -47,6 +47,7 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .relbar i{display:block;height:100%}
 /* 홈 */
 .hero{text-align:center;padding:30px 20px}
+.hero .titleimg{width:100%;max-width:860px;border-radius:18px;display:block;margin:0 auto 12px;box-shadow:0 6px 18px rgba(22,50,79,.15)}
 .hero h1{font-size:44px;margin:6px 0;color:var(--navy)}
 .hero .ship{font-size:64px;display:inline-block;animation:bob 3s ease-in-out infinite}
 @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-8px) rotate(2deg)}}
@@ -159,7 +160,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <script src="map-data.js"></script>
 <script>
 'use strict';
-const VERSION = 'v1.2';
+const VERSION = 'v1.3';
 /* =========================================================
    어린이 대통령의 무역 교실 — 6학년 사회 '세계 여러 나라와의 경제 교류'
    만든이: 푸르이든
@@ -554,10 +555,9 @@ function home(){
   const others = Object.keys(STORE.profiles).filter(n=>n && n!==last);
   app.innerHTML = `
   <div class="card hero">
-    <div class="ship">🚢</div>
+    <img class="titleimg" src="images/title.webp" alt="여러 나라 친구들과 함께 웃는 어린이 대통령" onerror="this.outerHTML='<div class=ship>🚢</div>'">
     <div class="eyebrow">6학년 사회 · 세계 여러 나라와의 경제 교류</div>
     <h1>어린이 대통령의 무역 교실</h1>
-    ${mapSVG({routes:true,labels:true})}
     <p>내가 대통령이 되어 다른 나라와 물건을 사고팔아요.<br>
     흑자와 적자를 기록하고, 이웃 나라와의 <b>관계</b>를 지키며 나라를 이끌어 보세요!</p>
     <div class="namebox">
@@ -567,6 +567,7 @@ function home(){
     </div>
     <div id="homeActs" class="actions"></div>
   </div>
+  <div class="card"><h3 style="margin-top:0">🌏 우리나라와 함께 무역하는 나라들</h3>${mapSVG({routes:true,labels:true})}<div class="mapcap">노란 원이 깜빡이는 곳이 우리나라예요. 배들이 무역로를 따라 물건을 실어 날라요.</div></div>
   <div class="card"><h3 style="margin-top:0">🎮 게임 방법</h3>${rulesHTML()}</div>
   <div class="card"><details><summary class="muted">기록 관리</summary>
     <div class="actions"><button class="btn small ghost" onclick="wipeName()">지금 이름의 기록 지우기</button>
