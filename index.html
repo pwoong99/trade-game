@@ -47,6 +47,8 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .relbar i{display:block;height:100%}
 /* 홈 */
 .hero{text-align:center;padding:30px 20px}
+.evimg{width:100%;max-width:820px;display:block;margin:10px auto;border-radius:16px;box-shadow:0 4px 14px rgba(22,50,79,.12)}
+.evimg.sm{max-width:520px}
 .hero .titleimg{width:100%;max-width:860px;border-radius:18px;display:block;margin:0 auto 12px;box-shadow:0 6px 18px rgba(22,50,79,.15)}
 .hero h1{font-size:44px;margin:6px 0;color:var(--navy)}
 .hero .ship{font-size:64px;display:inline-block;animation:bob 3s ease-in-out infinite}
@@ -160,7 +162,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <script src="map-data.js"></script>
 <script>
 'use strict';
-const VERSION = 'v1.4';
+const VERSION = 'v1.5';
 /* =========================================================
    어린이 대통령의 무역 교실 — 6학년 사회 '세계 여러 나라와의 경제 교류'
    만든이: 푸르이든
@@ -564,6 +566,7 @@ function mapSVG(o){
   if(o.flows||o.plan) s+=`<rect x="178" y="402" width="230" height="40" rx="10" fill="#fff" opacity=".85"/><text x="188" y="418" font-size="13" fill="#1e9e5a">━ 🚢 수출 (우리가 파는 것)</text><text x="188" y="435" font-size="13" fill="#2d6cdf">━ 📦 수입 (우리가 사 오는 것)</text>`;
   return s+'</svg>';
 }
+function evImg(id,sm){ return `<img class="evimg${sm?' sm':''}" src="images/ev_${id}.webp" alt="" loading="lazy" onerror="this.remove()">`; }
 function ringSVG(flows){ return mapSVG(flows?{flows,rel:true}:{rel:true}); }
 // 우리나라 확대 지도
 function insetSVG(code){
@@ -666,7 +669,7 @@ function dreamScreen(){
   const ex = Object.keys(d.exports).slice(0,2).map(itemName).join('와 ');
   const delay = .6+d.needs.length*.9;
   app.innerHTML = `<div class="card dream">
-    <div class="big">🌙</div>
+    ${evImg('dream')}
     <p>대통령 취임식 전날 밤, 이상한 꿈을 꾸었어요.<br>꿈속의 ${jo(d.n,'은')} 다른 나라와 <b>아무것도 주고받지 않는 나라</b>였어요. 필요한 것은 모두 스스로 만들어 써야 했지요.</p>
     ${needs}
     <div class="dline" style="animation-delay:${delay}s">🏭 창고에는 팔지 못한 ${jo(ex,'이')} 산처럼 쌓였어요. 팔 곳이 없으니 돈을 벌 수 없어요.</div>
@@ -1124,8 +1127,9 @@ function eventScreen(){
   app.innerHTML = topBar()+`<div class="card">
     <div class="eyebrow">${periodLabel(G.turn)} · 대통령의 결정</div>
     <div class="evhead"><span style="font-size:42px">${ev.icon}</span><h2>${ev.title(c)}</h2></div>
-    ${mapSVG({sm:true,rel:true,focus:(c.P||c.R)})}
+    ${evImg(R.id)}
     <div class="story">${gl(ev.story(c))}</div>
+    ${(c.P||c.R)?mapSVG({sm:true,rel:true,focus:(c.P||c.R)}):''}
     ${R.autoMsg?`<div class="notice bad">⚠️ ${R.autoMsg}</div>`:''}
     ${R.crisis.map(t=>`<div class="notice bad">${t}</div>`).join('')}
     <div class="sect" style="margin-top:10px">🗣️ 참모들의 의견</div>
@@ -1153,6 +1157,7 @@ function eventResultScreen(){
   app.innerHTML = topBar()+`<div class="card">
     <div class="eyebrow">${periodLabel(G.turn)} · 결정의 결과</div>
     <div class="evhead"><span style="font-size:36px">${ev.icon}</span><h2>${ev.title(c)}</h2></div>
+    ${evImg(R.id,true)}
     <div class="notice">🗳️ 대통령님의 결정: <b>${R.pick}</b></div>
     <div class="story">${gl(R.text)}</div>
     ${R.crisis2.map(t=>`<div class="notice bad">${t}</div>`).join('')}
