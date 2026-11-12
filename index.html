@@ -102,7 +102,8 @@ textarea{min-height:80px;resize:vertical;font-size:16px}
 .evhead h2{margin:0;font-size:28px;color:var(--navy)}
 .story{font-size:19px;background:#fff;border-left:5px solid var(--sea);border-radius:0 12px 12px 0;padding:12px 16px;margin:12px 0}
 .adv{display:flex;gap:10px;align-items:flex-start;margin:8px 0}
-.adv .av{font-size:28px;width:44px;height:44px;border-radius:50%;background:#eef6f8;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.adv .av img{width:100%;height:100%;display:block;border-radius:50%}
+.adv .av{font-size:28px;width:58px;height:58px;border-radius:50%;background:#eef6f8;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
 .adv .bub{background:#fff;border:1px solid var(--line);border-radius:4px 14px 14px 14px;padding:8px 12px;font-size:16px}
 .adv .who2{font-family:'Jua';font-size:14px;color:var(--muted)}
 .choices{display:grid;gap:10px;margin-top:14px}
@@ -162,7 +163,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <script src="map-data.js"></script>
 <script>
 'use strict';
-const VERSION = 'v1.5';
+const VERSION = 'v1.6';
 /* =========================================================
    어린이 대통령의 무역 교실 — 6학년 사회 '세계 여러 나라와의 경제 교류'
    만든이: 푸르이든
@@ -567,6 +568,13 @@ function mapSVG(o){
   return s+'</svg>';
 }
 function evImg(id,sm){ return `<img class="evimg${sm?' sm':''}" src="images/ev_${id}.webp" alt="" loading="lazy" onerror="this.remove()">`; }
+// 참모 얼굴 그림 (images/adv_0~11.webp)
+const ADV_KEYS = [['산업부',0],['농림부',1],['외교부',2],['재정',3],['경제 장관',3],['문화부',4],['통상',5],['연구원',6],['기업인',7],['소비자',8],['국민 대표',8],['농민',9],['생산자',9],['강경파',10],['환경',11]];
+function avHTML(a){
+  let k = (ADV_KEYS.find(([w])=>a[1].includes(w))||[])[1];
+  if(k===undefined && a[0]==='😟') k=9;
+  return k===undefined ? a[0] : `<img src="images/adv_${k}.webp" alt="${a[1]}" onerror="this.outerHTML='${a[0]}'">`;
+}
 function ringSVG(flows){ return mapSVG(flows?{flows,rel:true}:{rel:true}); }
 // 우리나라 확대 지도
 function insetSVG(code){
@@ -1133,7 +1141,7 @@ function eventScreen(){
     ${R.autoMsg?`<div class="notice bad">⚠️ ${R.autoMsg}</div>`:''}
     ${R.crisis.map(t=>`<div class="notice bad">${t}</div>`).join('')}
     <div class="sect" style="margin-top:10px">🗣️ 참모들의 의견</div>
-    ${ev.adv(c).map(a=>`<div class="adv"><div class="av">${a[0]}</div><div><div class="who2">${a[1]}</div><div class="bub">${gl(a[2])}</div></div></div>`).join('')}
+    ${ev.adv(c).map(a=>`<div class="adv"><div class="av">${avHTML(a)}</div><div><div class="who2">${a[1]}</div><div class="bub">${gl(a[2])}</div></div></div>`).join('')}
     <div class="sect" style="margin-top:12px">대통령님의 결정은?</div>
     <div class="muted">무엇을 얻고 잃는지는 고른 뒤에 알 수 있어요.</div>
     <div class="choices">${chs.map((ch,i)=>{
