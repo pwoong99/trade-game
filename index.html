@@ -231,6 +231,7 @@ body.has-top .tl-tools{display:none}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.66', text: '무역 장터에서 한 묶음을 다 고르면 다음에 고를 곳으로 화면이 천천히 내려감' },
   { v: '1.65', text: '전체 화면·배경 음악 버튼을 왼쪽 위로, 만든이·버전·방문자 수를 왼쪽 아래로 옮김' },
   { v: '1.64', text: '왼쪽 아래에 방문자 수(오늘·전체) 표시 추가' },
   { v: '1.63', text: '잔잔한 배경 음악 추가 (왼쪽 아래 버튼으로 켜고 끄기, 음악 파일 없이 브라우저에서 직접 연주)' },
@@ -1064,7 +1065,7 @@ function marketScreen(){
   needs.forEach((n,ni)=>{ if(G.stock[n.it] && !mk.imp[ni]) mk.imp[ni]='stock'; });
   const needRows = needs.map((n,ni)=>{
     const sel = mk.imp[ni];
-    if(G.stock[n.it]) return `<div class="needrow"><div class="nh">${itemE(n.it)} ${itemName(n.it)}</div><div class="notice good" style="margin:0">지난 장터에서 미리 사 둔 ${jo(itemName(n.it),'을')} 창고에서 꺼내 써요. 이번에는 돈이 들지 않아요.</div></div>`;
+    if(G.stock[n.it]) return `<div class="needrow" data-ni="${ni}"><div class="nh">${itemE(n.it)} ${itemName(n.it)}</div><div class="notice good" style="margin:0">지난 장터에서 미리 사 둔 ${jo(itemName(n.it),'을')} 창고에서 꺼내 써요. 이번에는 돈이 들지 않아요.</div></div>`;
     const opts = G.partners.map(p=>{
       const o=importOffer(p,n); if(!o) return '';
       return `<button class="opt${sel===p?' sel':''}" ${o.refuse?'disabled':''} onclick="pickImp(${ni},'${p}')">${badge(p,true)}
@@ -1073,7 +1074,7 @@ function marketScreen(){
     const via = Math.round(n.p*1.6*impMul(n.it));
     const canStock = sit.drop===n.it && sel && sel!=='skip';
     const isNew = n.it==='medkit';
-    return `<div class="needrow"><div class="nh">${itemE(n.it)} ${itemName(n.it)}${isNew?' <span class="tag red">이번 상황 때문에 새로 필요해요</span>':''}${impMul(n.it)>1?` <span class="tag red">값 오름</span>`:impMul(n.it)<1?` <span class="tag green">값 내림</span>`:''}</div>
+    return `<div class="needrow" data-ni="${ni}"><div class="nh">${itemE(n.it)} ${itemName(n.it)}${isNew?' <span class="tag red">이번 상황 때문에 새로 필요해요</span>':''}${impMul(n.it)>1?` <span class="tag red">값 오름</span>`:impMul(n.it)<1?` <span class="tag green">값 내림</span>`:''}</div>
       <div class="opts">${opts}
         <button class="opt${sel==='via'?' sel':''}" onclick="pickImp(${ni},'via')"><span>다른 곳을 거쳐<br>비싸게 사기 <span class="price">🪙 ${via}</span></span></button>
         <button class="opt skip${sel==='skip'?' sel':''}" onclick="pickImp(${ni},'skip')"><span>사지 않고<br>버티기</span></button>
@@ -1105,7 +1106,7 @@ function marketScreen(){
     <div class="sect">① 꼭 필요한 물건 사 오기 (<span class="k-imp">${gl('수입')}</span>)</div>
     <div class="muted">물건마다 어느 나라에서 사 올지 골라요. 관계가 좋을수록 값이 싸져요.</div>
     ${needRows}
-    <div class="sect" style="margin-top:18px">② 우리 물건 팔기 (<span class="k-exp">수출</span>) · <span style="color:var(--sea)">${mk.exp.length}/${nExp}</span>개 나라 고르기${slots!==d.slots?` <span class="tag ${slots>d.slots?'green':'red'}">이번 상황: 평소 ${d.slots}개 → ${slots}개</span>`:''}</div>
+    <div class="sect" id="expSect" style="margin-top:18px">② 우리 물건 팔기 (<span class="k-exp">수출</span>) · <span style="color:var(--sea)">${mk.exp.length}/${nExp}</span>개 나라 고르기${slots!==d.slots?` <span class="tag ${slots>d.slots?'green':'red'}">이번 상황: 평소 ${d.slots}개 → ${slots}개</span>`:''}</div>
     <div class="muted">관계가 좋고, 우리 산업 기술이 높을수록 더 많이 팔려요. 관계가 나쁘면 주문이 취소될 수 있어요.</div>
     <div class="expgrid" style="margin-top:8px">${expCards}</div>
     <div class="sect" id="extraSect" style="margin-top:18px">③ 다른 나라 물건 더 사 주기 (<span class="k-imp">수입</span>) · 고르지 않아도 돼요</div>
@@ -1116,7 +1117,47 @@ function marketScreen(){
     <div class="actions"><button class="btn" ${ready?'':'disabled'} onclick="doMarket()">${ready?'이대로 계약하기':'모두 고르면 계약할 수 있어요'}</button></div>
   </div>`;
 }
-function pickImp(ni,p){ beep('tap'); G.mk.imp[ni]=p; if(p==='skip' && G.mk.stock===curNeeds()[ni].it) G.mk.stock=null; saveGame(); marketScreen(); }
+// ---------- 다음 고를 곳으로 천천히 내려가기 ----------
+const AUTO = { timer:null, raf:null };
+function autoCancel(){ clearTimeout(AUTO.timer); cancelAnimationFrame(AUTO.raf); AUTO.timer=AUTO.raf=null; }
+['wheel','touchstart','keydown'].forEach(ev=>window.addEventListener(ev,()=>{ if(AUTO.raf) autoCancel(); },{passive:true}));
+function topOffset(){ const t=document.getElementById('top'); return (t?t.getBoundingClientRect().height:0) + 12; }
+// el: 화면 위쪽에 올 요소, lastEl: 함께 보였으면 하는 마지막 요소
+function autoScrollTo(el, lastEl){
+  autoCancel();
+  if(!el) return;
+  AUTO.timer = setTimeout(()=>{
+    const off = topOffset();
+    const r = el.getBoundingClientRect(), r2 = (lastEl||el).getBoundingClientRect();
+    if(r.top >= off-4 && r2.bottom <= window.innerHeight) return;      // 이미 잘 보이면 그대로
+    const start = window.scrollY;
+    const maxY = document.documentElement.scrollHeight - window.innerHeight;
+    const end = Math.min(maxY, start + r.top - off);
+    if(end <= start + 8) return;                                        // 아래로만 내려감
+    const dur = 1000, t0 = performance.now();
+    const ease = x => x<.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;          // 천천히 출발, 천천히 멈춤
+    const step = now => {
+      const k = Math.min(1,(now-t0)/dur);
+      window.scrollTo(0, start + (end-start)*ease(k));
+      AUTO.raf = k<1 ? requestAnimationFrame(step) : null;
+    };
+    AUTO.raf = requestAnimationFrame(step);
+  }, 400);
+}
+function nextSectAfter(id){
+  const h=document.getElementById(id); if(!h) return;
+  let grid=h.nextElementSibling; while(grid && !grid.classList.contains('expgrid')) grid=grid.nextElementSibling;
+  const btn=document.querySelector('#app .card > .actions:last-child') || grid;
+  autoScrollTo(h, id==='extraSect' ? btn : grid);
+}
+function pickImp(ni,p){
+  beep('tap'); const first = !G.mk.imp[ni];
+  G.mk.imp[ni]=p; if(p==='skip' && G.mk.stock===curNeeds()[ni].it) G.mk.stock=null; saveGame(); marketScreen();
+  if(!first) return;
+  const needs=curNeeds(); const nxt=needs.findIndex((n,i)=>!G.mk.imp[i]);
+  if(nxt>=0){ const row=document.querySelector(`.needrow[data-ni="${nxt}"]`); autoScrollTo(row,row); }
+  else nextSectAfter('expSect');
+}
 function toggleStock(it){ beep('tap'); G.mk.stock = G.mk.stock===it?null:it; saveGame(); marketScreen(); }
 function pickExtra(p){
   beep('tap'); const e=G.mk.extra, i=e.indexOf(p);
@@ -1124,6 +1165,12 @@ function pickExtra(p){
   saveGame(); marketScreen();
 }
 function pickExp(p){
+  const before = G.mk.exp.length;
+  pickExp0(p);
+  const need = Math.min(curSlots(), curTraders().filter(q=>exportOffer(q)).length);
+  if(before < need && G.mk.exp.length === need) nextSectAfter('extraSect');
+}
+function pickExp0(p){
   beep('tap'); const e=G.mk.exp, i=e.indexOf(p);
   if(i>=0) e.splice(i,1); else { if(e.length>=curSlots()) e.shift(); e.push(p); }
   saveGame(); marketScreen();
@@ -1158,7 +1205,7 @@ function reqActs(q,i){
 function reqAct(i,k){
   const q=G.requests[i]; if(!q||q.done) return;
   const P=N(q.p); let t='';
-  if(k==='extra'){ const ex=G.mk.extra; if(!ex.includes(q.p) && extraOffer(q.p)) ex.push(q.p); saveGame(); marketScreen(); document.getElementById('extraSect')?.scrollIntoView({behavior:'smooth'}); return; }
+  if(k==='extra'){ const ex=G.mk.extra; if(!ex.includes(q.p) && extraOffer(q.p)) ex.push(q.p); saveGame(); marketScreen(); nextSectAfter('extraSect'); return; }
   if(k==='invest'){ add('m',-10); rel(q.p,12); G.cum[q.p]=Math.round(G.cum[q.p]*0.5); t=`${P}에 공장을 지어 그 나라 사람들의 일자리를 만들었어요. ${jo(P,'이')} 무척 기뻐했어요.`; }
   if(k==='summit'){ const c=q.type==='lowrel'?8:6; add('m',-c); rel(q.p,q.type==='lowrel'?15:8); t=`${jo(P,'과')} 정상 회담을 열어 서로의 이야기를 들었어요. 두 나라 사이가 한결 가까워졌어요.`; }
   if(k==='untariff'){ G.tt[q.p]=0; G.tu[q.p]=Math.max(0,G.tu[q.p]-0.1); rel(q.p,8); t=`${P} 물건에 붙이던 관세를 낮췄어요. ${P}도 고마워하며 우리 물건에 붙이던 관세를 조금 낮췄어요.`; }
