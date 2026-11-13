@@ -176,6 +176,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 .version-badge:hover{color:var(--ink)}
 .fs-btn{position:fixed;left:12px;bottom:10px;z-index:50;font-size:14px;background:rgba(255,253,248,.96);color:var(--navy);border:1px solid var(--line);border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.12);cursor:pointer;font-family:'Jua',sans-serif}
 .fs-btn:hover{background:#fff}
+.bgm-btn{left:150px}
+@media (max-width:640px){.bgm-btn{left:12px;bottom:46px}}
+.bgm-btn.on{background:#e6f6f8;border-color:var(--sea);color:var(--sea)}
 .fb-btn{position:fixed;right:12px;bottom:42px;z-index:50;font-size:14px;background:var(--sea);color:#fff;border:none;border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.2);cursor:pointer;font-family:'Jua',sans-serif}
 .fb-panel{position:fixed;right:12px;bottom:80px;z-index:52;display:none;width:min(360px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(22,50,79,.18);padding:14px 16px;font-size:15px}
 .fb-panel.open{display:block}
@@ -212,6 +215,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <div class="version-panel" id="versionPanel"></div>
 <div class="version-badge" id="versionBadge" onclick="toggleVersionPanel()" title="눌러서 변경 기록 보기"></div>
  <button class="fs-btn" id="fsBtn" onclick="toggleFull()">⛶ 전체 화면</button>
+<button class="fs-btn bgm-btn" id="bgmBtn" onclick="toggleBgm()">♪ 배경 음악 켜기</button>
 <button class="fb-btn" id="fbBtn" onclick="toggleFb()">의견·오류 보내기</button>
 <div class="fb-panel" id="fbPanel"></div>
 <div id="pop"></div>
@@ -223,6 +227,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.63', text: '잔잔한 배경 음악 추가 (왼쪽 아래 버튼으로 켜고 끄기, 음악 파일 없이 브라우저에서 직접 연주)' },
   { v: '1.62', text: '왼쪽 아래에 전체 화면 버튼 추가 (태블릿용)' },
   { v: '1.61', text: '이번 장터 상황 그림 11장, 결말 칭호 그림 7개, 취임식 그림 추가' },
   { v: '1.60', major: true, text: '무역 장터에 "이번 장터 상황" 추가: 경기 호황·침체, 특별 주문, 원자재값 오르내림과 사 두기, 전염병, 배 부족, 국제 행사, 새로운 시장(새 나라와 무역 시작) 등에 따라 팔 수 있는 나라 수와 값, 사야 할 물건이 달라짐' },
@@ -578,6 +583,76 @@ function beep(type){
     seq.forEach(([f,d])=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type='triangle'; o.frequency.value=f; g.gain.setValueAtTime(.08,t); g.gain.exponentialRampToValueAtTime(.001,t+d); o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t+d); t+=d; });
   }catch(e){}
 }
+
+// ---------- 배경 음악 ----------
+// 음악 파일 없이 브라우저에서 직접 연주하는 잔잔한 곡 (C - Am - F - G 반복)
+const BGM = { on:false, ctx:null, master:null, timer:null, next:0, step:0 };
+const BGM_TEMPO = 76;                       // 빠르기
+const BGM_VOL = 0.06;                        // 크기 (0~1)
+const BGM_CHORDS = [[48,52,55,60],[45,52,57,60],[41,48,53,57],[43,50,55,59]]; // C Am F G (MIDI)
+const BGM_SCALE = [60,62,64,67,69,72,74,76]; // 도레미솔라 (5음계)
+const mtof = m => 440*Math.pow(2,(m-69)/12);
+function bgmInit(){
+  if(BGM.ctx) return;
+  BGM.ctx = actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+  const c=BGM.ctx;
+  BGM.master=c.createGain(); BGM.master.gain.value=0;
+  const lp=c.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2600;
+  // 은은한 울림(딜레이)
+  const dl=c.createDelay(); dl.delayTime.value=0.42; const fb=c.createGain(); fb.gain.value=0.32; const wet=c.createGain(); wet.gain.value=0.35;
+  BGM.master.connect(lp); lp.connect(c.destination);
+  BGM.master.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(wet); wet.connect(lp);
+}
+function bgmNote(m,t,dur,type,vol,att){
+  const c=BGM.ctx, o=c.createOscillator(), g=c.createGain();
+  o.type=type; o.frequency.value=mtof(m);
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+att); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  o.connect(g); g.connect(BGM.master); o.start(t); o.stop(t+dur+0.05);
+}
+function bgmTick(){
+  const c=BGM.ctx, beat=60/BGM_TEMPO, eighth=beat/2;
+  while(BGM.next < c.currentTime+0.6){
+    const t=BGM.next, st=BGM.step, bar=Math.floor(st/8)%4, pos=st%8, ch=BGM_CHORDS[bar];
+    if(pos===0){
+      ch.forEach(n=>bgmNote(n,t,beat*4.2,'sine',0.10,0.8));      // 부드러운 화음
+      bgmNote(ch[0]-12,t,beat*3.5,'triangle',0.16,0.05);           // 낮은 음
+    }
+    if(pos===4) bgmNote(ch[0]-12,t,beat*1.8,'triangle',0.10,0.05);
+    // 가끔 떨어지는 멜로디 방울
+    if(Math.random() < (pos%2===0?0.55:0.2)){
+      const cands=BGM_SCALE.filter(n=>ch.some(k=>(n-k)%12===0) || Math.random()<0.35);
+      bgmNote(cands[Math.floor(Math.random()*cands.length)], t, beat*1.6, 'sine', 0.13, 0.02);
+    }
+    BGM.next += eighth; BGM.step++;
+  }
+}
+function bgmStart(){
+  bgmInit(); const c=BGM.ctx; if(c.state==='suspended') c.resume();
+  BGM.next=c.currentTime+0.1;
+  BGM.master.gain.cancelScheduledValues(c.currentTime);
+  BGM.master.gain.setValueAtTime(BGM.master.gain.value,c.currentTime);
+  BGM.master.gain.linearRampToValueAtTime(BGM_VOL,c.currentTime+2);
+  clearInterval(BGM.timer); BGM.timer=setInterval(bgmTick,200); bgmTick();
+  BGM.on=true; updateBgmBtn();
+}
+function bgmStop(){
+  if(!BGM.ctx){ BGM.on=false; updateBgmBtn(); return; }
+  const c=BGM.ctx; BGM.master.gain.cancelScheduledValues(c.currentTime);
+  BGM.master.gain.setValueAtTime(BGM.master.gain.value,c.currentTime);
+  BGM.master.gain.linearRampToValueAtTime(0,c.currentTime+1);
+  setTimeout(()=>{ if(!BGM.on) clearInterval(BGM.timer); },1100);
+  BGM.on=false; updateBgmBtn();
+}
+function toggleBgm(){ BGM.on?bgmStop():bgmStart(); try{ localStorage.setItem('tradeGame_bgm',BGM.on?'1':'0'); }catch(e){} }
+function updateBgmBtn(){ const b=document.getElementById('bgmBtn'); if(!b) return; b.textContent=BGM.on?'♪ 배경 음악 끄기':'♪ 배경 음악 켜기'; b.classList.toggle('on',BGM.on); }
+// 지난번에 켜 두었다면, 처음 화면을 누를 때 다시 켜기 (브라우저는 누르기 전에는 소리를 못 내게 함)
+document.addEventListener('pointerdown',function once(e){
+  document.removeEventListener('pointerdown',once,true);
+  let want=false; try{ want=localStorage.getItem('tradeGame_bgm')==='1'; }catch(_){}
+  if(want && !BGM.on && !e.target.closest('#bgmBtn')) bgmStart();
+},true);
+// 다른 탭으로 가면 잠시 멈춤
+document.addEventListener('visibilitychange',()=>{ if(!BGM.ctx) return; if(document.hidden) BGM.ctx.suspend(); else if(BGM.on) BGM.ctx.resume(); });
 
 // ---------- 저장 ----------
 const KEY = 'tradeGame_v1';
