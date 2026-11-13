@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="무역 교실">
 <title>어린이 대통령의 무역 교실</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -171,6 +174,8 @@ svg text{font-family:'Jua',sans-serif}
 footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 .version-badge{position:fixed;right:12px;bottom:10px;z-index:50;font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:4px 10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;user-select:none}
 .version-badge:hover{color:var(--ink)}
+.fs-btn{position:fixed;left:12px;bottom:10px;z-index:50;font-size:14px;background:rgba(255,253,248,.96);color:var(--navy);border:1px solid var(--line);border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.12);cursor:pointer;font-family:'Jua',sans-serif}
+.fs-btn:hover{background:#fff}
 .fb-btn{position:fixed;right:12px;bottom:42px;z-index:50;font-size:14px;background:var(--sea);color:#fff;border:none;border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.2);cursor:pointer;font-family:'Jua',sans-serif}
 .fb-panel{position:fixed;right:12px;bottom:80px;z-index:52;display:none;width:min(360px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(22,50,79,.18);padding:14px 16px;font-size:15px}
 .fb-panel.open{display:block}
@@ -206,6 +211,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <div id="app"></div>
 <div class="version-panel" id="versionPanel"></div>
 <div class="version-badge" id="versionBadge" onclick="toggleVersionPanel()" title="눌러서 변경 기록 보기"></div>
+ <button class="fs-btn" id="fsBtn" onclick="toggleFull()">⛶ 전체 화면</button>
 <button class="fb-btn" id="fbBtn" onclick="toggleFb()">의견·오류 보내기</button>
 <div class="fb-panel" id="fbPanel"></div>
 <div id="pop"></div>
@@ -217,6 +223,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.62', text: '왼쪽 아래에 전체 화면 버튼 추가 (태블릿용)' },
   { v: '1.61', text: '이번 장터 상황 그림 11장, 결말 칭호 그림 7개, 취임식 그림 추가' },
   { v: '1.60', major: true, text: '무역 장터에 "이번 장터 상황" 추가: 경기 호황·침체, 특별 주문, 원자재값 오르내림과 사 두기, 전염병, 배 부족, 국제 행사, 새로운 시장(새 나라와 무역 시작) 등에 따라 팔 수 있는 나라 수와 값, 사야 할 물건이 달라짐' },
   { v: '1.51', text: '의견·오류 보내기를 스프레드시트와 연결' },
@@ -1687,6 +1694,29 @@ function renderVersionBadge(){
     `<div class="vrow"><div class="vnum${h.major?' major':''}">v${h.v}</div><div class="vtext">${esc(h.text)}</div></div>`).join('');
 }
 function toggleVersionPanel(){ document.getElementById('fbPanel').classList.remove('open'); document.getElementById('versionPanel').classList.toggle('open'); }
+
+// ---------- 전체 화면 ----------
+function isFull(){ return !!(document.fullscreenElement || document.webkitFullscreenElement); }
+function toggleFull(){
+  const el=document.documentElement;
+  try{
+    if(isFull()){ (document.exitFullscreen||document.webkitExitFullscreen).call(document); return; }
+    const req = el.requestFullscreen || el.webkitRequestFullscreen;
+    if(req){ const r=req.call(el); if(r && r.catch) r.catch(fullHelp); }
+    else fullHelp();
+  }catch(e){ fullHelp(); }
+}
+function fullHelp(){
+  modal(`<h2 style="margin-top:0">전체 화면으로 하려면</h2>
+    <p>이 기기의 브라우저는 버튼으로 전체 화면을 켤 수 없어요. 대신 이렇게 해 보세요.</p>
+    <ul class="rules"><li><b>아이폰·아이패드(사파리)</b>: 아래쪽(또는 위쪽)의 공유 버튼 → <b>홈 화면에 추가</b>를 누른 뒤, 홈 화면에 생긴 아이콘으로 열면 주소창 없이 넓게 보여요.</li>
+    <li><b>안드로이드 태블릿(크롬·웨일)</b>: 오른쪽 위 메뉴 → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누른 뒤 그 아이콘으로 열어요.</li></ul>`);
+}
+function updateFsBtn(){ const b=document.getElementById('fsBtn'); if(b) b.textContent = isFull()?'✕ 전체 화면 끄기':'⛶ 전체 화면'; }
+document.addEventListener('fullscreenchange',updateFsBtn);
+document.addEventListener('webkitfullscreenchange',updateFsBtn);
+// 홈 화면에 추가해서 연 경우(이미 주소창 없음)에는 버튼 숨김
+if(window.matchMedia && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)){ document.addEventListener('DOMContentLoaded',()=>{}); setTimeout(()=>{ const b=document.getElementById('fsBtn'); if(b) b.style.display='none'; },0); }
 
 // ---------- 의견·오류 보내기 ----------
 // 구글 앱스 스크립트 웹 앱 주소를 넣으면 스프레드시트에 쌓여요.
