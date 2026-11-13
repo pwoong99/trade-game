@@ -50,6 +50,8 @@ button{font-family:inherit;font-size:inherit;cursor:pointer}
 .relbar i{display:block;height:100%}
 /* 홈 */
 .hero{text-align:center;padding:22px 20px 16px}
+#app{padding-top:52px}
+body.has-top #app{padding-top:16px}
 .evimg{width:100%;max-width:820px;display:block;margin:10px auto;border-radius:16px;box-shadow:0 4px 14px rgba(22,50,79,.12)}
 .evimg.sm{max-width:520px}
 .hero .titleimg{width:100%;max-width:860px;max-height:300px;object-fit:cover;object-position:center 40%;border-radius:18px;display:block;margin:0 auto 12px;box-shadow:0 6px 18px rgba(22,50,79,.15)}
@@ -172,17 +174,18 @@ svg text{font-family:'Jua',sans-serif}
 .tl .yr{font-family:'Jua';color:var(--sea);white-space:nowrap;min-width:110px}
 #cardimg{max-width:100%;border-radius:14px;border:1px solid var(--line);margin-top:10px}
 footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
-.version-badge{position:fixed;right:12px;bottom:10px;z-index:50;font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:4px 10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;user-select:none}
+.bl{position:fixed;left:12px;bottom:10px;z-index:50;display:flex;gap:6px;flex-wrap:wrap;align-items:center;max-width:calc(100vw - 170px)}
+.version-badge{font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:4px 10px;border-radius:12px;border:1px solid var(--line);cursor:pointer;user-select:none}
 .version-badge:hover{color:var(--ink)}
-.fs-btn{position:fixed;left:12px;bottom:10px;z-index:50;font-size:14px;background:rgba(255,253,248,.96);color:var(--navy);border:1px solid var(--line);border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.12);cursor:pointer;font-family:'Jua',sans-serif}
+.tl-tools{position:fixed;left:12px;top:10px;z-index:30;display:flex;gap:6px;flex-wrap:wrap}
+body.has-top .tl-tools{display:none}
+.toprow .fs-btn{box-shadow:none;font-size:13px;padding:4px 9px}
+.fs-btn{font-size:14px;background:rgba(255,253,248,.96);color:var(--navy);border:1px solid var(--line);border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.12);cursor:pointer;font-family:'Jua',sans-serif}
 .fs-btn:hover{background:#fff}
-.bgm-btn{left:150px}
-@media (max-width:640px){.bgm-btn{left:12px;bottom:46px}}
-.visit-badge{position:fixed;left:12px;bottom:48px;z-index:49;font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:3px 10px;border-radius:12px;border:1px solid var(--line);display:none}
-@media (max-width:640px){.visit-badge{bottom:84px}}
+.visit-badge{font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:3px 10px;border-radius:12px;border:1px solid var(--line);display:none}
 .bgm-btn.on{background:#e6f6f8;border-color:var(--sea);color:var(--sea)}
-.fb-btn{position:fixed;right:12px;bottom:42px;z-index:50;font-size:14px;background:var(--sea);color:#fff;border:none;border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.2);cursor:pointer;font-family:'Jua',sans-serif}
-.fb-panel{position:fixed;right:12px;bottom:80px;z-index:52;display:none;width:min(360px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(22,50,79,.18);padding:14px 16px;font-size:15px}
+.fb-btn{position:fixed;right:12px;bottom:10px;z-index:50;font-size:14px;background:var(--sea);color:#fff;border:none;border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.2);cursor:pointer;font-family:'Jua',sans-serif}
+.fb-panel{position:fixed;right:12px;bottom:50px;z-index:52;display:none;width:min(360px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(22,50,79,.18);padding:14px 16px;font-size:15px}
 .fb-panel.open{display:block}
 .fb-panel h3{margin:0 0 8px;font-size:18px}
 .fb-panel .kinds{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
@@ -190,7 +193,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 .fb-panel .kinds button.sel{border-color:var(--sea);background:#e6f6f8}
 .fb-panel textarea{min-height:90px;font-size:15px}
 .fb-panel input{font-size:15px;padding:6px 10px}
-.version-panel{position:fixed;right:12px;bottom:80px;z-index:51;display:none;width:min(360px,calc(100vw - 24px));max-height:60vh;overflow-y:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px rgba(22,50,79,.15);padding:14px 16px;font-size:14px}
+.version-panel{position:fixed;left:12px;bottom:44px;z-index:51;display:none;width:min(360px,calc(100vw - 24px));max-height:60vh;overflow-y:auto;background:var(--paper);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 20px rgba(22,50,79,.15);padding:14px 16px;font-size:14px}
 .version-panel.open{display:block}
 .version-panel h3{font-size:17px;margin:0 0 10px}
 .version-panel .vrow{display:flex;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
@@ -215,10 +218,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <body>
 <div id="app"></div>
 <div class="version-panel" id="versionPanel"></div>
-<div class="version-badge" id="versionBadge" onclick="toggleVersionPanel()" title="눌러서 변경 기록 보기"></div>
- <button class="fs-btn" id="fsBtn" onclick="toggleFull()">⛶ 전체 화면</button>
-<button class="fs-btn bgm-btn" id="bgmBtn" onclick="toggleBgm()">♪ 배경 음악 켜기</button>
-<div class="visit-badge" id="visitBadge"></div>
+<div class="bl"><div class="version-badge" id="versionBadge" onclick="toggleVersionPanel()" title="눌러서 변경 기록 보기"></div><div class="visit-badge" id="visitBadge"></div></div>
+<div class="tl-tools"><button class="fs-btn js-fs" onclick="toggleFull()">⛶ 전체 화면</button><button class="fs-btn bgm-btn js-bgm" onclick="toggleBgm()">♪ 배경 음악 켜기</button></div>
 <button class="fb-btn" id="fbBtn" onclick="toggleFb()">의견·오류 보내기</button>
 <div class="fb-panel" id="fbPanel"></div>
 <div id="pop"></div>
@@ -230,6 +231,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.65', text: '전체 화면·배경 음악 버튼을 왼쪽 위로, 만든이·버전·방문자 수를 왼쪽 아래로 옮김' },
   { v: '1.64', text: '왼쪽 아래에 방문자 수(오늘·전체) 표시 추가' },
   { v: '1.63', text: '잔잔한 배경 음악 추가 (왼쪽 아래 버튼으로 켜고 끄기, 음악 파일 없이 브라우저에서 직접 연주)' },
   { v: '1.62', text: '왼쪽 아래에 전체 화면 버튼 추가 (태블릿용)' },
@@ -648,12 +650,12 @@ function bgmStop(){
   BGM.on=false; updateBgmBtn();
 }
 function toggleBgm(){ BGM.on?bgmStop():bgmStart(); try{ localStorage.setItem('tradeGame_bgm',BGM.on?'1':'0'); }catch(e){} }
-function updateBgmBtn(){ const b=document.getElementById('bgmBtn'); if(!b) return; b.textContent=BGM.on?'♪ 배경 음악 끄기':'♪ 배경 음악 켜기'; b.classList.toggle('on',BGM.on); }
+function updateBgmBtn(){ document.querySelectorAll('.js-bgm').forEach(b=>{ b.textContent=BGM.on?'♪ 배경 음악 끄기':'♪ 배경 음악 켜기'; b.classList.toggle('on',BGM.on); }); }
 // 지난번에 켜 두었다면, 처음 화면을 누를 때 다시 켜기 (브라우저는 누르기 전에는 소리를 못 내게 함)
 document.addEventListener('pointerdown',function once(e){
   document.removeEventListener('pointerdown',once,true);
   let want=false; try{ want=localStorage.getItem('tradeGame_bgm')==='1'; }catch(_){}
-  if(want && !BGM.on && !e.target.closest('#bgmBtn')) bgmStart();
+  if(want && !BGM.on && !e.target.closest('.js-bgm')) bgmStart();
 },true);
 // 다른 탭으로 가면 잠시 멈춤
 document.addEventListener('visibilitychange',()=>{ if(!BGM.ctx) return; if(document.hidden) BGM.ctx.suspend(); else if(BGM.on) BGM.ctx.resume(); });
@@ -788,6 +790,8 @@ function topBar(){
     return `<div class="meter${low?' low':''}" title="${lab}">${icon} <span class="muted" style="font-size:13px">${lab}</span> <b>${v}</b>${isMoney?'':`<span class="bar"><i style="width:${v}%"></i></span>`}</div>`;
   };
   return `<div id="top"><div class="toprow">
+    <button class="fs-btn js-fs" onclick="toggleFull()">${isFull()?'✕ 전체 화면 끄기':'⛶ 전체 화면'}</button>
+    <button class="fs-btn bgm-btn js-bgm${BGM.on?' on':''}" onclick="toggleBgm()">${BGM.on?'♪ 배경 음악 끄기':'♪ 배경 음악 켜기'}</button>
     <div class="who">${badge(G.me,true)} ${esc(G.name)} 대통령 · ${periodLabel(Math.min(G.turn,TURNS-1))} <span class="muted">(${Math.min(G.turn+1,TURNS)}/${TURNS})</span></div>
     ${m('🪙','나라 금고',G.money,true)}${m('😊','국민 생활',G.life)}${m('🏭','산업 기술',G.ind)}
     <button class="iconbtn" onclick="showRel()">관계 보기</button>
@@ -1791,11 +1795,11 @@ function fullHelp(){
     <ul class="rules"><li><b>아이폰·아이패드(사파리)</b>: 아래쪽(또는 위쪽)의 공유 버튼 → <b>홈 화면에 추가</b>를 누른 뒤, 홈 화면에 생긴 아이콘으로 열면 주소창 없이 넓게 보여요.</li>
     <li><b>안드로이드 태블릿(크롬·웨일)</b>: 오른쪽 위 메뉴 → <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누른 뒤 그 아이콘으로 열어요.</li></ul>`);
 }
-function updateFsBtn(){ const b=document.getElementById('fsBtn'); if(b) b.textContent = isFull()?'✕ 전체 화면 끄기':'⛶ 전체 화면'; }
+function updateFsBtn(){ document.querySelectorAll('.js-fs').forEach(b=>b.textContent = isFull()?'✕ 전체 화면 끄기':'⛶ 전체 화면'); }
 document.addEventListener('fullscreenchange',updateFsBtn);
 document.addEventListener('webkitfullscreenchange',updateFsBtn);
 // 홈 화면에 추가해서 연 경우(이미 주소창 없음)에는 버튼 숨김
-if(window.matchMedia && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)){ document.addEventListener('DOMContentLoaded',()=>{}); setTimeout(()=>{ const b=document.getElementById('fsBtn'); if(b) b.style.display='none'; },0); }
+if(window.matchMedia && (matchMedia('(display-mode: standalone)').matches || navigator.standalone)){ document.addEventListener('DOMContentLoaded',()=>{}); document.head.insertAdjacentHTML('beforeend','<style>.js-fs{display:none!important}</style>'); }
 
 // ---------- 의견·오류 보내기 ----------
 // 구글 앱스 스크립트 웹 앱 주소를 넣으면 스프레드시트에 쌓여요.
@@ -1851,6 +1855,9 @@ async function countVisit(){
     b.style.display='block';
   }catch(e){ /* 연결이 안 되면 표시하지 않음 */ }
 }
+
+// 게임 중에는 위쪽 막대 안의 버튼을, 그 밖의 화면에서는 왼쪽 위 버튼을 보여 줌
+new MutationObserver(()=>document.body.classList.toggle('has-top',!!document.getElementById('top'))).observe(app,{childList:true});
 
 // 시작
 renderVersionBadge();
