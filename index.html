@@ -178,6 +178,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 .fs-btn:hover{background:#fff}
 .bgm-btn{left:150px}
 @media (max-width:640px){.bgm-btn{left:12px;bottom:46px}}
+.visit-badge{position:fixed;left:12px;bottom:48px;z-index:49;font-size:12px;color:var(--muted);background:rgba(255,253,248,.94);padding:3px 10px;border-radius:12px;border:1px solid var(--line);display:none}
+@media (max-width:640px){.visit-badge{bottom:84px}}
 .bgm-btn.on{background:#e6f6f8;border-color:var(--sea);color:var(--sea)}
 .fb-btn{position:fixed;right:12px;bottom:42px;z-index:50;font-size:14px;background:var(--sea);color:#fff;border:none;border-radius:14px;padding:6px 12px;box-shadow:0 3px 10px rgba(22,50,79,.2);cursor:pointer;font-family:'Jua',sans-serif}
 .fb-panel{position:fixed;right:12px;bottom:80px;z-index:52;display:none;width:min(360px,calc(100vw - 24px));background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 6px 20px rgba(22,50,79,.18);padding:14px 16px;font-size:15px}
@@ -216,6 +218,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 <div class="version-badge" id="versionBadge" onclick="toggleVersionPanel()" title="눌러서 변경 기록 보기"></div>
  <button class="fs-btn" id="fsBtn" onclick="toggleFull()">⛶ 전체 화면</button>
 <button class="fs-btn bgm-btn" id="bgmBtn" onclick="toggleBgm()">♪ 배경 음악 켜기</button>
+<div class="visit-badge" id="visitBadge"></div>
 <button class="fb-btn" id="fbBtn" onclick="toggleFb()">의견·오류 보내기</button>
 <div class="fb-panel" id="fbPanel"></div>
 <div id="pop"></div>
@@ -227,6 +230,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;margin-top:30px}
 /* 버전 기록: 사소한 수정은 +0.01, 큰 변화는 다음 0.1 단위. 맨 위가 현재 버전 (major: true = 0.1 단위 변경) */
 const APP_AUTHOR = '푸르이든';
 const VERSION_HISTORY = [
+  { v: '1.64', text: '왼쪽 아래에 방문자 수(오늘·전체) 표시 추가' },
   { v: '1.63', text: '잔잔한 배경 음악 추가 (왼쪽 아래 버튼으로 켜고 끄기, 음악 파일 없이 브라우저에서 직접 연주)' },
   { v: '1.62', text: '왼쪽 아래에 전체 화면 버튼 추가 (태블릿용)' },
   { v: '1.61', text: '이번 장터 상황 그림 11장, 결말 칭호 그림 7개, 취임식 그림 추가' },
@@ -1830,8 +1834,27 @@ document.addEventListener('click',e=>{
   p.classList.remove('open');
 });
 
+// ---------- 방문자 수 ----------
+// 같은 기기는 하루에 한 번만 셉니다. (의견 받기와 같은 앱스 스크립트 주소를 씀)
+async function countVisit(){
+  if(!FEEDBACK_URL) return;
+  const today = new Date().toLocaleDateString('ko-KR',{timeZone:'Asia/Seoul'});
+  let seen=''; try{ seen=localStorage.getItem('tradeGame_visit')||''; }catch(e){}
+  const action = seen===today ? 'count' : 'visit';
+  try{
+    const r = await fetch(FEEDBACK_URL+'?action='+action,{method:'GET'});
+    const d = await r.json();
+    if(!d || !d.ok) return;
+    if(action==='visit'){ try{ localStorage.setItem('tradeGame_visit',today); }catch(e){} }
+    const b=document.getElementById('visitBadge');
+    b.textContent = `방문 오늘 ${Number(d.today).toLocaleString()} · 전체 ${Number(d.total).toLocaleString()}`;
+    b.style.display='block';
+  }catch(e){ /* 연결이 안 되면 표시하지 않음 */ }
+}
+
 // 시작
 renderVersionBadge();
+countVisit();
 home();
 </script>
 </body>
